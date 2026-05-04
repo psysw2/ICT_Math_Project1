@@ -1,846 +1,760 @@
-import React, { useState, useRef } from 'react';
-import { User, Camera, Code2, Ruler, CheckCircle2, Lock, Upload, X, Play, Terminal, Lightbulb, Trophy, FileText, Download, ArrowRight, ArrowLeft, LogOut, Home, Building2, Sparkles, ClipboardCheck, AlertCircle, Cloud, CloudOff, Loader2, Settings } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>STEM 學習平台</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang TC", "Microsoft JhengHei", sans-serif; }
+    .animate-spin { animation: spin 1s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div style="text-align:center;padding:40px;color:#666;">⏳ 載入中...（首次載入需編譯 JSX，約 3-5 秒）</div>
+  </div>
 
-// ⚙️ 把 Google Apps Script 部署後的網址貼在這裡
-const API_URL = 'https://script.google.com/macros/s/AKfycbxQBe3uGo9tjfWLcP3QYZSb6UBbWZOrO9BHezo6mG1H35Dw9eQJsuXOUN3rcWvx7NHA/exec';
+  <script type="text/babel" data-presets="react">
+    const { useState, useRef } = React;
 
-// 雲端 API 呼叫（使用 text/plain 避免 CORS preflight）
-async function apiCall(action, payload) {
-  if (!API_URL || API_URL.includes('你的部署ID')) {
-    throw new Error('未設定 API_URL，請先在程式頂部貼上 Apps Script 網址');
-  }
-  const res = await fetch(API_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ action, ...payload }),
-    redirect: 'follow',
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const data = await res.json();
-  if (data.error) throw new Error(data.error);
-  return data;
-}
+    // ⚙️ 把 Google Apps Script 部署後的網址貼在這裡
+    const API_URL = 'https://script.google.com/macros/s/AKfycbxQBe3uGo9tjfWLcP3QYZSb6UBbWZOrO9BHezo6mG1H35Dw9eQJsuXOUN3rcWvx7NHA/exec';
 
-export default function STEMPlatform() {
-  const [page, setPage] = useState('login');
-  const [student, setStudent] = useState(null);
-  const [activeTask, setActiveTask] = useState(null);
-  const [activeStep, setActiveStep] = useState(1);
-  const [data, setData] = useState({
-    task1: { step1: null, step2: null, step3: null },
-    task2: { step1: null, step2: null, step3: null },
-  });
+    // ============================================================
+    // ICON COMPONENTS（取代 lucide-react）
+    // ============================================================
+    const Icon = ({ children, size = 24, className = '' }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        {children}
+      </svg>
+    );
+    const User = (p) => <Icon {...p}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></Icon>;
+    const Camera = (p) => <Icon {...p}><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3"/></Icon>;
+    const Code2 = (p) => <Icon {...p}><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></Icon>;
+    const Ruler = (p) => <Icon {...p}><path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/><path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/></Icon>;
+    const CheckCircle2 = (p) => <Icon {...p}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></Icon>;
+    const Lock = (p) => <Icon {...p}><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></Icon>;
+    const Upload = (p) => <Icon {...p}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></Icon>;
+    const X = (p) => <Icon {...p}><path d="M18 6 6 18"/><path d="m6 6 12 12"/></Icon>;
+    const Play = (p) => <Icon {...p}><polygon points="6 3 20 12 6 21 6 3"/></Icon>;
+    const Terminal = (p) => <Icon {...p}><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></Icon>;
+    const Lightbulb = (p) => <Icon {...p}><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></Icon>;
+    const Trophy = (p) => <Icon {...p}><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></Icon>;
+    const FileText = (p) => <Icon {...p}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></Icon>;
+    const ArrowRight = (p) => <Icon {...p}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></Icon>;
+    const ArrowLeft = (p) => <Icon {...p}><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></Icon>;
+    const LogOut = (p) => <Icon {...p}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></Icon>;
+    const Home = (p) => <Icon {...p}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></Icon>;
+    const Building2 = (p) => <Icon {...p}><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></Icon>;
+    const Sparkles = (p) => <Icon {...p}><path d="M9.937 15.5A2 2 0 0 0 8.5 14.063l-6.135-1.582a.5.5 0 0 1 0-.962L8.5 9.936A2 2 0 0 0 9.937 8.5l1.582-6.135a.5.5 0 0 1 .963 0L14.063 8.5A2 2 0 0 0 15.5 9.937l6.135 1.581a.5.5 0 0 1 0 .964L15.5 14.063a2 2 0 0 0-1.437 1.437l-1.582 6.135a.5.5 0 0 1-.963 0z"/></Icon>;
+    const ClipboardCheck = (p) => <Icon {...p}><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="m9 14 2 2 4-4"/></Icon>;
+    const AlertCircle = (p) => <Icon {...p}><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></Icon>;
+    const Cloud = (p) => <Icon {...p}><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></Icon>;
+    const CloudOff = (p) => <Icon {...p}><path d="m2 2 20 20"/><path d="M5.782 5.782A7 7 0 0 0 9 19h8.5a4.5 4.5 0 0 0 1.307-.193"/><path d="M21.532 16.5A4.5 4.5 0 0 0 17.5 10h-1.79A7.008 7.008 0 0 0 10 5.07"/></Icon>;
+    const Loader2 = (p) => <Icon {...p}><path d="M21 12a9 9 0 1 1-6.219-8.56"/></Icon>;
+    const Settings = (p) => <Icon {...p}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></Icon>;
 
-  const updateData = (task, step, value) => {
-    setData(prev => ({ ...prev, [task]: { ...prev[task], [step]: value } }));
-  };
-
-  const handleLogin = async (info) => {
-    const studentData = { ...info, loginAt: new Date().toLocaleString('zh-HK') };
-    try {
-      await apiCall('login', { student: studentData });
-    } catch (e) {
-      console.warn('登入記錄失敗（不影響使用）:', e.message);
-    }
-    setStudent(studentData);
-    setPage('dashboard');
-  };
-
-  const handleLogout = () => {
-    if (confirm('確定登出？')) {
-      setStudent(null);
-      setData({ task1: { step1: null, step2: null, step3: null }, task2: { step1: null, step2: null, step3: null } });
-      setPage('login');
-    }
-  };
-
-  const goToTask = (task) => {
-    setActiveTask(task);
-    setActiveStep(1);
-    setPage('task');
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-emerald-50">
-      {page === 'login' && <LoginPage onLogin={handleLogin} />}
-      {page === 'dashboard' && <Dashboard student={student} data={data} onLogout={handleLogout} onSelectTask={goToTask} onViewReport={() => setPage('report')} />}
-      {page === 'task' && (
-        <TaskFlow
-          student={student}
-          task={activeTask}
-          step={activeStep}
-          setStep={setActiveStep}
-          taskData={data[activeTask]}
-          updateData={(s, v) => updateData(activeTask, s, v)}
-          onBack={() => setPage('dashboard')}
-        />
-      )}
-      {page === 'report' && <ReportPage student={student} data={data} onBack={() => setPage('dashboard')} />}
-    </div>
-  );
-}
-
-// ============================================================
-// 雲端狀態指示
-// ============================================================
-function CloudBadge({ status, error }) {
-  if (status === 'syncing') return <span className="inline-flex items-center gap-1 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full"><Loader2 size={12} className="animate-spin" />同步中</span>;
-  if (status === 'success') return <span className="inline-flex items-center gap-1 text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full"><Cloud size={12} />已上傳</span>;
-  if (status === 'error') return <span className="inline-flex items-center gap-1 text-xs bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full" title={error}><CloudOff size={12} />上傳失敗</span>;
-  return null;
-}
-
-// ============================================================
-// LOGIN
-// ============================================================
-function LoginPage({ onLogin }) {
-  const [form, setForm] = useState({ name: '', cls: '', num: '', group: '' });
-  const [err, setErr] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const submit = async () => {
-    if (!form.name.trim() || !form.cls.trim() || !form.num.trim()) {
-      setErr('請填寫姓名、班別、學號');
-      return;
-    }
-    setLoading(true);
-    setErr('');
-    try {
-      await onLogin(form);
-    } catch (e) {
-      setErr(e.message);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const apiConfigured = !API_URL.includes('你的部署ID');
-
-  return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-8 w-full max-w-md border border-slate-200">
-        <div className="text-center mb-6">
-          <div className="inline-flex bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-4 rounded-2xl mb-3">
-            <Sparkles className="text-white" size={32} />
-          </div>
-          <h1 className="text-2xl font-bold text-slate-800">STEM 學習平台</h1>
-          <p className="text-sm text-slate-500 mt-1">三角比 × Python · 估算建築物高度</p>
-          {!apiConfigured && (
-            <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-2 text-xs text-amber-800 flex items-start gap-1">
-              <Settings size={14} className="flex-shrink-0 mt-0.5" />
-              <span>未設定 Google API，資料只儲存於本機。請在程式頂部設定 <code className="bg-amber-100 px-1 rounded">API_URL</code></span>
-            </div>
-          )}
-          {apiConfigured && (
-            <div className="mt-3 inline-flex items-center gap-1 text-xs bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full">
-              <Cloud size={12} /> 已連接 Google Sheets + Drive
-            </div>
-          )}
-        </div>
-
-        <div className="space-y-3">
-          <Field icon={<User size={16} />} label="姓名" value={form.name} onChange={v => setForm({ ...form, name: v })} placeholder="陳大文" />
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="班別" value={form.cls} onChange={v => setForm({ ...form, cls: v })} placeholder="3A" />
-            <Field label="學號" value={form.num} onChange={v => setForm({ ...form, num: v })} placeholder="15" />
-          </div>
-          <Field label="組別（選填）" value={form.group} onChange={v => setForm({ ...form, group: v })} placeholder="第 1 組" />
-
-          {err && (
-            <div className="bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-lg p-2 flex items-center gap-2">
-              <AlertCircle size={14} /> {err}
-            </div>
-          )}
-
-          <button onClick={submit} disabled={loading}
-            className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-lg text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50">
-            {loading ? <><Loader2 size={16} className="animate-spin" />登入中...</> : <>開始學習 <ArrowRight size={16} /></>}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function Field({ icon, label, value, onChange, placeholder }) {
-  return (
-    <label className="block">
-      <div className="text-xs font-semibold text-slate-600 mb-1 flex items-center gap-1">
-        {icon}{label}
-      </div>
-      <input type="text" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-        className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg outline-none focus:border-indigo-500 transition text-sm" />
-    </label>
-  );
-}
-
-// ============================================================
-// DASHBOARD
-// ============================================================
-function Dashboard({ student, data, onLogout, onSelectTask, onViewReport }) {
-  const taskProgress = (t) => [data[t].step1, data[t].step2, data[t].step3].filter(Boolean).length;
-  const totalSteps = taskProgress('task1') + taskProgress('task2');
-  const allDone = totalSteps === 6;
-
-  return (
-    <div className="p-3 md:p-5">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-md p-4 md:p-5 mb-4 border border-slate-200 flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-br from-indigo-500 to-purple-600 w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg">
-              {student.name.charAt(0)}
-            </div>
-            <div>
-              <div className="font-bold text-slate-800 flex items-center gap-2">
-                {student.name}
-                <span className="inline-flex items-center gap-1 text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-normal">
-                  <Cloud size={10} /> 雲端同步
-                </span>
-              </div>
-              <div className="text-xs text-slate-500">
-                {student.cls} · {student.num} {student.group && `· ${student.group}`}
-              </div>
-            </div>
-          </div>
-          <button onClick={onLogout}
-            className="flex items-center gap-1 text-sm text-slate-500 hover:bg-slate-100 px-3 py-1.5 rounded-lg transition">
-            <LogOut size={14} /> 登出
-          </button>
-        </div>
-
-        <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl shadow-lg p-4 md:p-5 mb-4 text-white">
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <div>
-              <div className="text-sm opacity-90">整體學習進度</div>
-              <div className="text-2xl md:text-3xl font-bold">{totalSteps} / 6 個步驟</div>
-            </div>
-            <div className="text-right">
-              <div className="text-4xl md:text-5xl font-bold">{Math.round(totalSteps / 6 * 100)}%</div>
-            </div>
-          </div>
-          <div className="mt-3 bg-white/20 rounded-full h-2 overflow-hidden">
-            <div className="bg-white h-full rounded-full transition-all" style={{ width: `${totalSteps / 6 * 100}%` }} />
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-md p-5 mb-4 border border-slate-200">
-          <h2 className="font-bold text-slate-800 mb-3 flex items-center gap-2">
-            <ClipboardCheck size={18} className="text-indigo-600" /> 學習流程
-          </h2>
-          <div className="grid md:grid-cols-3 gap-3">
-            <StepIntro num="1" icon={<Camera size={20} />} color="rose" title="紙本計算" desc="工作紙影相 → 上傳 Drive" />
-            <StepIntro num="2" icon={<Code2 size={20} />} color="indigo" title="Python 編程" desc="iPad 編寫程式 → 存入 Sheet" />
-            <StepIntro num="3" icon={<Ruler size={20} />} color="emerald" title="實地量度" desc="操場量度 → 記錄到 Sheet" />
-          </div>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-4 mb-4">
-          <TaskCard taskKey="task1" icon={<Home size={22} />} title="任務一：陰雨操場" color="emerald" progress={taskProgress('task1')} data={data.task1} onClick={() => onSelectTask('task1')} />
-          <TaskCard taskKey="task2" icon={<Building2 size={22} />} title="任務二：學校大樓" color="blue" progress={taskProgress('task2')} data={data.task2} onClick={() => onSelectTask('task2')} />
-        </div>
-
-        {allDone && (
-          <div className="bg-gradient-to-r from-amber-400 to-orange-500 rounded-2xl shadow-lg p-5 text-white flex items-center justify-between flex-wrap gap-3 mb-3">
-            <div className="flex items-center gap-3">
-              <Trophy size={32} />
-              <div>
-                <div className="font-bold text-lg">🎉 完成所有任務！</div>
-                <div className="text-sm opacity-90">所有資料已上傳雲端</div>
-              </div>
-            </div>
-            <button onClick={onViewReport} className="bg-white text-orange-600 px-4 py-2 rounded-lg font-bold hover:shadow-lg transition flex items-center gap-1">
-              <FileText size={16} /> 查看報告
-            </button>
-          </div>
-        )}
-        {!allDone && totalSteps > 0 && (
-          <button onClick={onViewReport} className="w-full bg-white border-2 border-slate-200 hover:border-indigo-400 rounded-xl p-3 text-sm text-slate-600 font-semibold flex items-center justify-center gap-2 transition">
-            <FileText size={14} /> 查看目前進度
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function StepIntro({ num, icon, color, title, desc }) {
-  const colors = {
-    rose: 'bg-rose-50 border-rose-200 text-rose-700',
-    indigo: 'bg-indigo-50 border-indigo-200 text-indigo-700',
-    emerald: 'bg-emerald-50 border-emerald-200 text-emerald-700',
-  };
-  return (
-    <div className={`rounded-xl border-2 p-3 ${colors[color]}`}>
-      <div className="flex items-center gap-2 mb-1">
-        <span className="bg-white w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm border-2 border-current">{num}</span>
-        {icon}<span className="font-bold">{title}</span>
-      </div>
-      <p className="text-xs text-slate-600 ml-1">{desc}</p>
-    </div>
-  );
-}
-
-function TaskCard({ taskKey, icon, title, color, progress, data, onClick }) {
-  const colorMap = {
-    emerald: { bg: 'from-emerald-500 to-teal-500', border: 'border-emerald-200', text: 'text-emerald-700' },
-    blue: { bg: 'from-blue-500 to-indigo-500', border: 'border-blue-200', text: 'text-blue-700' },
-  };
-  const c = colorMap[color];
-  return (
-    <button onClick={onClick} className={`text-left bg-white rounded-2xl shadow-md hover:shadow-xl border-2 ${c.border} transition overflow-hidden`}>
-      <div className={`bg-gradient-to-r ${c.bg} p-4 text-white`}>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">{icon}<span className="font-bold">{title}</span></div>
-          <span className="bg-white/20 px-2 py-0.5 rounded text-xs font-bold">{progress}/3</span>
-        </div>
-      </div>
-      <div className="p-4 space-y-2">
-        <MiniStep done={!!data.step1} label="紙本計算 + 影相" icon={<Camera size={14} />} />
-        <MiniStep done={!!data.step2} label="Python 編程" icon={<Code2 size={14} />} />
-        <MiniStep done={!!data.step3} label="實地量度數據" icon={<Ruler size={14} />} />
-        <div className={`text-xs ${c.text} font-bold flex items-center gap-1 pt-1`}>
-          {progress === 3 ? '✓ 已完成' : '繼續學習'} <ArrowRight size={12} />
-        </div>
-      </div>
-    </button>
-  );
-}
-
-function MiniStep({ done, label, icon }) {
-  return (
-    <div className="flex items-center gap-2 text-sm">
-      {done ? <CheckCircle2 size={16} className="text-emerald-500" /> : <div className="w-4 h-4 rounded-full border-2 border-slate-300" />}
-      <span className={done ? 'text-slate-700' : 'text-slate-400'}>{icon}</span>
-      <span className={done ? 'text-slate-700 font-semibold' : 'text-slate-500'}>{label}</span>
-    </div>
-  );
-}
-
-// ============================================================
-// TASK FLOW
-// ============================================================
-function TaskFlow({ student, task, step, setStep, taskData, updateData, onBack }) {
-  const taskInfo = {
-    task1: { title: '任務一：陰雨操場', icon: <Home size={18} /> },
-    task2: { title: '任務二：學校大樓', icon: <Building2 size={18} /> },
-  }[task];
-
-  return (
-    <div className="p-3 md:p-5">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-md p-4 mb-4 border border-slate-200 flex items-center justify-between flex-wrap gap-3">
-          <button onClick={onBack} className="flex items-center gap-1 text-sm text-slate-600 hover:bg-slate-100 px-3 py-1.5 rounded-lg">
-            <ArrowLeft size={14} /> 返回主頁
-          </button>
-          <div className="flex items-center gap-2 font-bold text-slate-800">{taskInfo.icon} {taskInfo.title}</div>
-          <div className="text-xs text-slate-500">{student.name} · {student.cls}{student.num}</div>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-md p-4 mb-4 border border-slate-200">
-          <div className="flex items-center justify-between gap-2">
-            <StepDot num={1} label="紙本計算" active={step === 1} done={!!taskData.step1} onClick={() => setStep(1)} />
-            <div className={`flex-1 h-1 rounded ${taskData.step1 ? 'bg-emerald-400' : 'bg-slate-200'}`} />
-            <StepDot num={2} label="Python" active={step === 2} done={!!taskData.step2} onClick={() => taskData.step1 && setStep(2)} locked={!taskData.step1} />
-            <div className={`flex-1 h-1 rounded ${taskData.step2 ? 'bg-emerald-400' : 'bg-slate-200'}`} />
-            <StepDot num={3} label="實測數據" active={step === 3} done={!!taskData.step3} onClick={() => taskData.step2 && setStep(3)} locked={!taskData.step2} />
-          </div>
-        </div>
-
-        {step === 1 && <Step1Photo student={student} task={task} data={taskData.step1} onSave={(v) => { updateData('step1', v); setStep(2); }} />}
-        {step === 2 && <Step2Python student={student} task={task} data={taskData.step2} onSave={(v) => { updateData('step2', v); setStep(3); }} />}
-        {step === 3 && <Step3Measurement student={student} task={task} data={taskData.step3} pythonData={taskData.step2} onSave={(v) => { updateData('step3', v); onBack(); }} />}
-      </div>
-    </div>
-  );
-}
-
-function StepDot({ num, label, active, done, locked, onClick }) {
-  return (
-    <button onClick={onClick} disabled={locked} className={`flex flex-col items-center gap-1 ${locked ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}>
-      <div className={`w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold text-sm transition ${
-        done ? 'bg-emerald-500 text-white' : active ? 'bg-indigo-500 text-white ring-4 ring-indigo-100' : 'bg-slate-200 text-slate-500'
-      }`}>
-        {locked ? <Lock size={14} /> : done ? <CheckCircle2 size={18} /> : num}
-      </div>
-      <span className={`text-xs font-semibold ${active ? 'text-indigo-700' : done ? 'text-emerald-700' : 'text-slate-500'}`}>{label}</span>
-    </button>
-  );
-}
-
-// ============================================================
-// STEP 1: PHOTO UPLOAD
-// ============================================================
-function Step1Photo({ student, task, data, onSave }) {
-  const [photo, setPhoto] = useState(data?.photo || null);
-  const [notes, setNotes] = useState(data?.notes || '');
-  const [err, setErr] = useState('');
-  const [syncing, setSyncing] = useState(false);
-  const fileRef = useRef(null);
-
-  const handleFile = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    if (file.size > 5 * 1024 * 1024) { setErr('檔案太大（請小於 5MB）'); return; }
-    const reader = new FileReader();
-    reader.onload = (ev) => { setPhoto({ name: file.name, src: ev.target.result }); setErr(''); };
-    reader.readAsDataURL(file);
-  };
-
-  const submit = async () => {
-    if (!photo) { setErr('請先上傳工作紙相片'); return; }
-    setSyncing(true);
-    setErr('');
-    try {
-      const result = await apiCall('saveStep1', { student, task, photo, notes });
-      onSave({ photo, notes, photoUrl: result.photoUrl, photoId: result.photoId, submittedAt: new Date().toLocaleString('zh-HK'), synced: true });
-    } catch (e) {
-      // 失敗仍然儲存於本機
-      if (confirm(`雲端上傳失敗：${e.message}\n\n是否仍要繼續到下一步？(資料只在本機)`)) {
-        onSave({ photo, notes, submittedAt: new Date().toLocaleString('zh-HK'), synced: false, syncError: e.message });
+    // ============================================================
+    // API
+    // ============================================================
+    async function apiCall(action, payload) {
+      if (!API_URL || API_URL.includes('你的部署ID')) {
+        throw new Error('未設定 API_URL，請先在程式頂部貼上 Apps Script 網址');
       }
-    } finally {
-      setSyncing(false);
-    }
-  };
-
-  return (
-    <div className="bg-white rounded-2xl shadow-md p-5 border border-slate-200">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="bg-rose-100 text-rose-700 p-2 rounded-lg"><Camera size={20} /></div>
-        <div className="flex-1">
-          <h2 className="font-bold text-slate-800 flex items-center gap-2">步驟 1：紙本數學計算 <Cloud size={14} className="text-blue-500" /></h2>
-          <p className="text-xs text-slate-500">手寫推導 → 拍照 → 自動上傳到 Google Drive</p>
-        </div>
-      </div>
-
-      <div className="bg-amber-50 border-l-4 border-amber-400 rounded-r-lg p-3 mb-4">
-        <div className="font-bold text-amber-900 text-sm mb-2 flex items-center gap-1"><Lightbulb size={14} /> 任務指引</div>
-        <div className="text-sm text-slate-700 space-y-1">
-          {task === 'task1' ? (
-            <>
-              <div>• 在工作紙畫出三角形示意圖</div>
-              <div>• 推導 <strong>陰雨操場高度 = 5 × tan(θ) + h₂</strong></div>
-              <div>• 拍清楚整張工作紙</div>
-            </>
-          ) : (
-            <>
-              <div>• 畫出兩點仰角示意圖</div>
-              <div>• 推導 <strong>EF = BD ÷ (1/tan x − 1/tan y)</strong></div>
-              <div>• 拍清楚整張工作紙</div>
-            </>
-          )}
-        </div>
-      </div>
-
-      <input type="file" accept="image/*" capture="environment" ref={fileRef} onChange={handleFile} className="hidden" />
-      {!photo ? (
-        <button onClick={() => fileRef.current?.click()} className="w-full border-2 border-dashed border-slate-300 hover:border-rose-400 hover:bg-rose-50 rounded-xl p-8 transition flex flex-col items-center gap-2 mb-4">
-          <Upload size={32} className="text-slate-400" />
-          <div className="font-bold text-slate-700">點擊上傳工作紙相片</div>
-          <div className="text-xs text-slate-500">將上傳到 Google Drive 個人資料夾</div>
-        </button>
-      ) : (
-        <div className="border-2 border-emerald-300 rounded-xl overflow-hidden bg-slate-50 mb-4">
-          <div className="bg-emerald-50 px-3 py-2 flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm">
-              <CheckCircle2 size={16} className="text-emerald-600" />
-              <span className="font-semibold text-emerald-700 truncate">{photo.name}</span>
-            </div>
-            <button onClick={() => { setPhoto(null); if (fileRef.current) fileRef.current.value = ''; }} className="text-rose-500 hover:bg-rose-100 p-1 rounded">
-              <X size={16} />
-            </button>
-          </div>
-          <img src={photo.src} alt="工作紙" className="w-full max-h-96 object-contain bg-white" />
-        </div>
-      )}
-
-      <div className="mb-4">
-        <label className="block text-sm font-semibold text-slate-700 mb-1">備註（選填）</label>
-        <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="例如：我用了 tan 比..." className="w-full p-3 border-2 border-slate-200 rounded-lg outline-none focus:border-rose-400 text-sm resize-none" rows={3} />
-      </div>
-
-      {err && <div className="bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-lg p-2 mb-3 flex items-center gap-1"><AlertCircle size={14} />{err}</div>}
-
-      <button onClick={submit} disabled={syncing} className="w-full bg-gradient-to-r from-rose-500 to-pink-500 hover:shadow-lg text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50">
-        {syncing ? <><Loader2 size={16} className="animate-spin" /> 上傳到 Google Drive...</> : <>提交並進入下一步 <ArrowRight size={16} /></>}
-      </button>
-    </div>
-  );
-}
-
-// ============================================================
-// STEP 2: PYTHON
-// ============================================================
-function Step2Python({ student, task, data, onSave }) {
-  const [code, setCode] = useState(data?.code || (task === 'task1' ? { theta: '', h2: '', formula: '' } : { BD: '', x: '', y: '', eye: '', formula: '' }));
-  const [output, setOutput] = useState(data?.output || null);
-  const [showHint, setShowHint] = useState(false);
-  const [syncing, setSyncing] = useState(false);
-
-  const validateTask1 = () => {
-    const t = parseFloat(code.theta), h2 = parseFloat(code.h2);
-    const formula = code.formula.replace(/\s/g, '');
-    if (isNaN(t) || isNaN(h2)) return { error: '請輸入 theta 和 h2' };
-    if (!formula) return { error: '請填寫公式' };
-    const valid = ['5*math.tan(math.radians(theta))+h2', 'h2+5*math.tan(math.radians(theta))'];
-    if (!valid.includes(formula)) return { error: '公式不正確。提示：5 × tan(θ) + h₂' };
-    const h1 = 5 * Math.tan(t * Math.PI / 180);
-    return { success: true, total: h1 + h2, h1, t, h2, formula };
-  };
-
-  const validateTask2 = () => {
-    const BD = parseFloat(code.BD), x = parseFloat(code.x), y = parseFloat(code.y), eye = parseFloat(code.eye);
-    const formula = code.formula.replace(/\s/g, '');
-    if ([BD, x, y, eye].some(isNaN)) return { error: '請輸入所有變數' };
-    if (x >= y) return { error: 'x 必須 < y' };
-    if (!formula) return { error: '請填寫公式' };
-    const valid = ['BD/(1/math.tan(math.radians(x))-1/math.tan(math.radians(y)))+eye', 'eye+BD/(1/math.tan(math.radians(x))-1/math.tan(math.radians(y)))'];
-    if (!valid.includes(formula)) return { error: '公式不正確。提示：BD ÷ (1/tan x − 1/tan y) + eye' };
-    const tanX = Math.tan(x * Math.PI / 180), tanY = Math.tan(y * Math.PI / 180);
-    const EF = BD / (1 / tanX - 1 / tanY);
-    return { success: true, total: EF + eye, EF, BD, x, y, eye, formula };
-  };
-
-  const run = () => setOutput(task === 'task1' ? validateTask1() : validateTask2());
-
-  const submit = async () => {
-    if (!output?.success) { setOutput({ error: '請先成功執行程式' }); return; }
-    setSyncing(true);
-    try {
-      await apiCall('saveStep2', { student, task, code, output });
-      onSave({ code, output, submittedAt: new Date().toLocaleString('zh-HK'), synced: true });
-    } catch (e) {
-      if (confirm(`雲端上傳失敗：${e.message}\n\n是否仍要繼續？`)) {
-        onSave({ code, output, submittedAt: new Date().toLocaleString('zh-HK'), synced: false });
-      }
-    } finally {
-      setSyncing(false);
-    }
-  };
-
-  return (
-    <div className="bg-white rounded-2xl shadow-md p-5 border border-slate-200">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="bg-indigo-100 text-indigo-700 p-2 rounded-lg"><Code2 size={20} /></div>
-        <div>
-          <h2 className="font-bold text-slate-800 flex items-center gap-2">步驟 2：Python 編程 <Cloud size={14} className="text-blue-500" /></h2>
-          <p className="text-xs text-slate-500">把公式寫成 Python 程式 → 存入 Sheet</p>
-        </div>
-      </div>
-
-      <div className="bg-slate-900 rounded-xl overflow-hidden mb-3 shadow-lg">
-        <div className="bg-slate-800 px-3 py-2 flex items-center gap-2">
-          <Terminal size={14} className="text-emerald-400" />
-          <span className="text-xs text-slate-300 font-mono">{task === 'task1' ? 'covered_playground.py' : 'school_height.py'}</span>
-        </div>
-        <div className="p-4 font-mono text-sm text-slate-200 space-y-1 overflow-x-auto">
-          <div><span className="text-purple-400">import</span> <span className="text-sky-300">math</span></div>
-          {task === 'task1' ? (
-            <>
-              <CodeInput label="theta" placeholder="45" value={code.theta} onChange={v => setCode({ ...code, theta: v })} comment="# 仰角 (度)" />
-              <CodeInput label="h2" step="0.01" placeholder="1.55" value={code.h2} onChange={v => setCode({ ...code, h2: v })} comment="# 眼睛高度" />
-            </>
-          ) : (
-            <>
-              <CodeInput label="BD" placeholder="9" value={code.BD} onChange={v => setCode({ ...code, BD: v })} comment="# 兩觀察點距離" />
-              <CodeInput label="x" placeholder="25" value={code.x} onChange={v => setCode({ ...code, x: v })} comment="# 較小仰角" />
-              <CodeInput label="y" placeholder="45" value={code.y} onChange={v => setCode({ ...code, y: v })} comment="# 較大仰角" />
-              <CodeInput label="eye" step="0.01" placeholder="1.55" value={code.eye} onChange={v => setCode({ ...code, eye: v })} comment="# 眼睛高度" />
-            </>
-          )}
-          <div className="text-slate-500 mt-1"># 計算公式</div>
-          <div className="flex items-start flex-wrap gap-1">
-            <span className="text-emerald-300">height</span><span className="text-slate-400">=</span>
-            <input type="text" value={code.formula} onChange={e => setCode({ ...code, formula: e.target.value })}
-              placeholder={task === 'task1' ? '5*math.tan(math.radians(theta))+h2' : 'BD/(1/math.tan(math.radians(x))-1/math.tan(math.radians(y)))+eye'}
-              className="bg-slate-800 border border-slate-700 rounded px-2 py-0.5 flex-1 min-w-0 text-yellow-300 font-mono text-xs outline-none focus:border-emerald-500" />
-          </div>
-        </div>
-      </div>
-
-      <div className="flex gap-2 mb-3 flex-wrap">
-        <button onClick={run} className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-4 py-2 rounded-lg font-bold text-sm hover:shadow-lg">
-          <Play size={14} /> 執行
-        </button>
-        <button onClick={() => setShowHint(!showHint)} className="flex items-center gap-1 bg-amber-100 text-amber-700 px-3 py-2 rounded-lg text-sm hover:bg-amber-200">
-          <Lightbulb size={14} /> 提示
-        </button>
-      </div>
-
-      {showHint && (
-        <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3 text-xs font-mono">
-          {task === 'task1' ? (
-            <>height = <code>5*math.tan(math.radians(theta))+h2</code></>
-          ) : (
-            <>height = <code>BD/(1/math.tan(math.radians(x))-1/math.tan(math.radians(y)))+eye</code></>
-          )}
-        </div>
-      )}
-
-      {output && (
-        <div className={`rounded-xl p-3 mb-3 ${output.error ? 'bg-rose-50 border border-rose-200' : 'bg-slate-900'}`}>
-          {output.error ? (
-            <div className="text-rose-700 text-sm flex items-start gap-2"><AlertCircle size={16} />{output.error}</div>
-          ) : (
-            <div className="font-mono text-sm">
-              <div className="text-yellow-300 font-bold">高度 = {output.total.toFixed(3)} m</div>
-              <div className="text-emerald-300 text-xs mt-2 flex items-center gap-1"><CheckCircle2 size={12} /> 執行成功</div>
-            </div>
-          )}
-        </div>
-      )}
-
-      <button onClick={submit} disabled={!output?.success || syncing} className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-40">
-        {syncing ? <><Loader2 size={16} className="animate-spin" /> 上傳中...</> : <>提交並進入下一步 <ArrowRight size={16} /></>}
-      </button>
-    </div>
-  );
-}
-
-function CodeInput({ label, placeholder, value, onChange, step, comment }) {
-  return (
-    <>
-      <div className="text-slate-500">{comment}</div>
-      <div className="flex items-center flex-wrap gap-1">
-        <span className="text-emerald-300">{label}</span><span className="text-slate-400">=</span>
-        <input type="number" step={step} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
-          className="bg-slate-800 border border-slate-700 rounded px-2 py-0.5 w-20 text-yellow-300 outline-none focus:border-emerald-500" />
-      </div>
-    </>
-  );
-}
-
-// ============================================================
-// STEP 3: MEASUREMENT
-// ============================================================
-function Step3Measurement({ student, task, data, pythonData, onSave }) {
-  const [measurements, setMeasurements] = useState(data?.measurements || (
-    task === 'task1'
-      ? [{ id: 1, theta: '', h2: '' }, { id: 2, theta: '', h2: '' }, { id: 3, theta: '', h2: '' }]
-      : [
-          { id: 1, label: '排球場 (BD=9)', BD: '9', x: '', y: '' },
-          { id: 2, label: '籃球場 (BD=15)', BD: '15', x: '', y: '' },
-          { id: 3, label: '自訂', BD: '', x: '', y: '' },
-        ]
-  ));
-  const [eyeLevel, setEyeLevel] = useState(data?.eyeLevel || '');
-  const [reflection, setReflection] = useState(data?.reflection || '');
-  const [err, setErr] = useState('');
-  const [syncing, setSyncing] = useState(false);
-
-  const update = (id, key, val) => setMeasurements(measurements.map(m => m.id === id ? { ...m, [key]: val } : m));
-
-  const calcTask1 = (m) => {
-    const t = parseFloat(m.theta), h2 = parseFloat(m.h2);
-    if (isNaN(t) || isNaN(h2)) return null;
-    return { h1: 5 * Math.tan(t * Math.PI / 180), total: 5 * Math.tan(t * Math.PI / 180) + h2 };
-  };
-
-  const calcTask2 = (m) => {
-    const BD = parseFloat(m.BD), x = parseFloat(m.x), y = parseFloat(m.y), eye = parseFloat(eyeLevel);
-    if ([BD, x, y, eye].some(isNaN)) return null;
-    if (x >= y) return { error: 'x 必須 < y' };
-    const EF = BD / (1 / Math.tan(x * Math.PI / 180) - 1 / Math.tan(y * Math.PI / 180));
-    return { EF, total: EF + eye };
-  };
-
-  const results = measurements.map(m => ({ ...m, result: task === 'task1' ? calcTask1(m) : calcTask2(m) }));
-  const valid = results.filter(r => r.result && !r.result.error && isFinite(r.result.total));
-  const average = valid.length > 0 ? valid.reduce((s, r) => s + r.result.total, 0) / valid.length : null;
-
-  const submit = async () => {
-    if (valid.length < 2) { setErr('請至少完成 2 組有效數據'); return; }
-    setSyncing(true);
-    setErr('');
-    try {
-      await apiCall('saveStep3', {
-        student, task, measurements, eyeLevel, reflection,
-        average, validCount: valid.length,
-        pythonResult: pythonData?.output?.total || null
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action, ...payload }),
+        redirect: 'follow',
       });
-      onSave({ measurements, eyeLevel, reflection, average, validCount: valid.length, submittedAt: new Date().toLocaleString('zh-HK'), synced: true });
-    } catch (e) {
-      if (confirm(`雲端上傳失敗：${e.message}\n\n是否仍要完成任務？`)) {
-        onSave({ measurements, eyeLevel, reflection, average, validCount: valid.length, submittedAt: new Date().toLocaleString('zh-HK'), synced: false });
-      }
-    } finally {
-      setSyncing(false);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      return data;
     }
-  };
 
-  return (
-    <div className="bg-white rounded-2xl shadow-md p-5 border border-slate-200">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="bg-emerald-100 text-emerald-700 p-2 rounded-lg"><Ruler size={20} /></div>
-        <div>
-          <h2 className="font-bold text-slate-800 flex items-center gap-2">步驟 3：實地量度 <Cloud size={14} className="text-blue-500" /></h2>
-          <p className="text-xs text-slate-500">操場實測 → 自動上傳到 Google Sheet</p>
+    // ============================================================
+    // MAIN APP
+    // ============================================================
+    function STEMPlatform() {
+      const [page, setPage] = useState('login');
+      const [student, setStudent] = useState(null);
+      const [activeTask, setActiveTask] = useState(null);
+      const [activeStep, setActiveStep] = useState(1);
+      const [data, setData] = useState({
+        task1: { step1: null, step2: null, step3: null },
+        task2: { step1: null, step2: null, step3: null },
+      });
+
+      const updateData = (task, step, value) => {
+        setData(prev => ({ ...prev, [task]: { ...prev[task], [step]: value } }));
+      };
+
+      const handleLogin = async (info) => {
+        const studentData = { ...info, loginAt: new Date().toLocaleString('zh-HK') };
+        try { await apiCall('login', { student: studentData }); }
+        catch (e) { console.warn('登入記錄失敗:', e.message); }
+        setStudent(studentData);
+        setPage('dashboard');
+      };
+
+      const handleLogout = () => {
+        if (confirm('確定登出？')) {
+          setStudent(null);
+          setData({ task1: { step1: null, step2: null, step3: null }, task2: { step1: null, step2: null, step3: null } });
+          setPage('login');
+        }
+      };
+
+      const goToTask = (task) => { setActiveTask(task); setActiveStep(1); setPage('task'); };
+
+      return (
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-emerald-50">
+          {page === 'login' && <LoginPage onLogin={handleLogin} />}
+          {page === 'dashboard' && <Dashboard student={student} data={data} onLogout={handleLogout} onSelectTask={goToTask} onViewReport={() => setPage('report')} />}
+          {page === 'task' && <TaskFlow student={student} task={activeTask} step={activeStep} setStep={setActiveStep} taskData={data[activeTask]} updateData={(s, v) => updateData(activeTask, s, v)} onBack={() => setPage('dashboard')} />}
+          {page === 'report' && <ReportPage student={student} data={data} onBack={() => setPage('dashboard')} />}
         </div>
-      </div>
+      );
+    }
 
-      <div className="bg-emerald-50 border-l-4 border-emerald-400 rounded-r-lg p-3 mb-4 text-sm text-slate-700">
-        📏 至少做 <strong>2-3 組</strong>，會自動計算平均並對比 Python 結果
-      </div>
+    function CloudBadge({ status, error }) {
+      if (status === 'syncing') return <span className="inline-flex items-center gap-1 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full"><Loader2 size={12} className="animate-spin" />同步中</span>;
+      if (status === 'success') return <span className="inline-flex items-center gap-1 text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full"><Cloud size={12} />已上傳</span>;
+      if (status === 'error') return <span className="inline-flex items-center gap-1 text-xs bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full" title={error}><CloudOff size={12} />上傳失敗</span>;
+      return null;
+    }
 
-      {task === 'task2' && (
-        <div className="bg-slate-50 rounded-xl p-3 mb-4 flex items-center gap-3 flex-wrap">
-          <label className="font-semibold text-slate-700 text-sm">眼睛高度：</label>
-          <input type="number" step="0.01" value={eyeLevel} onChange={e => setEyeLevel(e.target.value)} placeholder="1.55"
-            className="w-28 px-2 py-1.5 border-2 border-slate-300 rounded-lg outline-none focus:border-emerald-500" />
-          <span className="text-slate-600 text-sm">米</span>
-        </div>
-      )}
+    // ============================================================
+    // LOGIN
+    // ============================================================
+    function LoginPage({ onLogin }) {
+      const [form, setForm] = useState({ name: '', cls: '', num: '', group: '' });
+      const [err, setErr] = useState('');
+      const [loading, setLoading] = useState(false);
 
-      <div className="space-y-3">
-        {measurements.map((m, i) => {
-          const r = results[i].result;
-          return (
-            <div key={m.id} className="border-2 border-slate-200 rounded-xl p-3 hover:border-emerald-300 transition">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-bold text-slate-700 text-sm">第 {m.id} 組{m.label ? ` · ${m.label}` : ''}</span>
-                {r && !r.error && <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded font-bold">= {r.total.toFixed(2)} m</span>}
-                {r?.error && <span className="text-xs bg-rose-100 text-rose-700 px-2 py-0.5 rounded">⚠ {r.error}</span>}
+      const submit = async () => {
+        if (!form.name.trim() || !form.cls.trim() || !form.num.trim()) { setErr('請填寫姓名、班別、學號'); return; }
+        setLoading(true); setErr('');
+        try { await onLogin(form); } catch (e) { setErr(e.message); } finally { setLoading(false); }
+      };
+
+      const apiConfigured = !API_URL.includes('你的部署ID');
+
+      return (
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-8 w-full max-w-md border border-slate-200">
+            <div className="text-center mb-6">
+              <div className="inline-flex bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 p-4 rounded-2xl mb-3">
+                <Sparkles className="text-white" size={32} />
               </div>
-              {task === 'task1' ? (
-                <div className="grid grid-cols-2 gap-2">
-                  <InputBox label="仰角 θ (°)" value={m.theta} onChange={v => update(m.id, 'theta', v)} step="0.1" />
-                  <InputBox label="眼睛高度 (m)" value={m.h2} onChange={v => update(m.id, 'h2', v)} step="0.01" />
+              <h1 className="text-2xl font-bold text-slate-800">STEM 學習平台</h1>
+              <p className="text-sm text-slate-500 mt-1">三角比 × Python · 估算建築物高度</p>
+              {!apiConfigured && (
+                <div className="mt-3 bg-amber-50 border border-amber-200 rounded-lg p-2 text-xs text-amber-800 flex items-start gap-1">
+                  <Settings size={14} className="flex-shrink-0 mt-0.5" />
+                  <span>未設定 Google API，資料只儲存於本機。請在程式頂部設定 <code className="bg-amber-100 px-1 rounded">API_URL</code></span>
                 </div>
-              ) : (
-                <div className="grid grid-cols-3 gap-2">
-                  <InputBox label="BD (m)" value={m.BD} onChange={v => update(m.id, 'BD', v)} step="0.1" disabled={m.id <= 2} />
-                  <InputBox label="仰角 x (°)" value={m.x} onChange={v => update(m.id, 'x', v)} step="0.1" />
-                  <InputBox label="仰角 y (°)" value={m.y} onChange={v => update(m.id, 'y', v)} step="0.1" />
+              )}
+              {apiConfigured && (
+                <div className="mt-3 inline-flex items-center gap-1 text-xs bg-emerald-50 text-emerald-700 px-2 py-1 rounded-full">
+                  <Cloud size={12} /> 已連接 Google Sheets + Drive
                 </div>
               )}
             </div>
-          );
-        })}
-      </div>
-
-      {average !== null && pythonData?.output?.success && (
-        <div className="mt-4 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl p-4 text-white">
-          <div className="font-bold mb-2 flex items-center gap-2"><Trophy size={18} /> 實測 vs Python</div>
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div><div className="text-xs opacity-80">實測平均</div><div className="text-2xl font-bold">{average.toFixed(2)} m</div></div>
-            <div><div className="text-xs opacity-80">Python</div><div className="text-2xl font-bold">{pythonData.output.total.toFixed(2)} m</div></div>
-            <div><div className="text-xs opacity-80">誤差</div><div className="text-2xl font-bold">{Math.abs(average - pythonData.output.total).toFixed(2)} m</div></div>
+            <div className="space-y-3">
+              <Field icon={<User size={16} />} label="姓名" value={form.name} onChange={v => setForm({ ...form, name: v })} placeholder="陳大文" />
+              <div className="grid grid-cols-2 gap-3">
+                <Field label="班別" value={form.cls} onChange={v => setForm({ ...form, cls: v })} placeholder="3A" />
+                <Field label="學號" value={form.num} onChange={v => setForm({ ...form, num: v })} placeholder="15" />
+              </div>
+              <Field label="組別（選填）" value={form.group} onChange={v => setForm({ ...form, group: v })} placeholder="第 1 組" />
+              {err && <div className="bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-lg p-2 flex items-center gap-2"><AlertCircle size={14} />{err}</div>}
+              <button onClick={submit} disabled={loading} className="w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:shadow-lg text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50">
+                {loading ? <><Loader2 size={16} className="animate-spin" />登入中...</> : <>開始學習 <ArrowRight size={16} /></>}
+              </button>
+            </div>
           </div>
         </div>
-      )}
+      );
+    }
 
-      <div className="mt-4">
-        <label className="block text-sm font-semibold text-slate-700 mb-1">學習反思</label>
-        <textarea value={reflection} onChange={e => setReflection(e.target.value)} placeholder="實測與 Python 的誤差來源..." className="w-full p-3 border-2 border-slate-200 rounded-lg outline-none focus:border-emerald-500 text-sm resize-none" rows={3} />
-      </div>
+    function Field({ icon, label, value, onChange, placeholder }) {
+      return (
+        <label className="block">
+          <div className="text-xs font-semibold text-slate-600 mb-1 flex items-center gap-1">{icon}{label}</div>
+          <input type="text" value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+            className="w-full px-3 py-2 border-2 border-slate-200 rounded-lg outline-none focus:border-indigo-500 transition text-sm" />
+        </label>
+      );
+    }
 
-      {err && <div className="bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-lg p-2 mt-3 flex items-center gap-1"><AlertCircle size={14} />{err}</div>}
+    // ============================================================
+    // DASHBOARD
+    // ============================================================
+    function Dashboard({ student, data, onLogout, onSelectTask, onViewReport }) {
+      const taskProgress = (t) => [data[t].step1, data[t].step2, data[t].step3].filter(Boolean).length;
+      const totalSteps = taskProgress('task1') + taskProgress('task2');
+      const allDone = totalSteps === 6;
 
-      <button onClick={submit} disabled={syncing} className="w-full mt-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:shadow-lg text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50">
-        {syncing ? <><Loader2 size={16} className="animate-spin" /> 上傳到 Google Sheet...</> : <><CheckCircle2 size={18} /> 完成任務並上傳</>}
-      </button>
-    </div>
-  );
-}
+      return (
+        <div className="p-3 md:p-5">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white rounded-2xl shadow-md p-4 md:p-5 mb-4 border border-slate-200 flex items-center justify-between flex-wrap gap-3">
+              <div className="flex items-center gap-3">
+                <div className="bg-gradient-to-br from-indigo-500 to-purple-600 w-12 h-12 rounded-full flex items-center justify-center text-white font-bold text-lg">{student.name.charAt(0)}</div>
+                <div>
+                  <div className="font-bold text-slate-800 flex items-center gap-2">
+                    {student.name}
+                    <span className="inline-flex items-center gap-1 text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-normal"><Cloud size={10} /> 雲端同步</span>
+                  </div>
+                  <div className="text-xs text-slate-500">{student.cls} · {student.num} {student.group && `· ${student.group}`}</div>
+                </div>
+              </div>
+              <button onClick={onLogout} className="flex items-center gap-1 text-sm text-slate-500 hover:bg-slate-100 px-3 py-1.5 rounded-lg transition"><LogOut size={14} /> 登出</button>
+            </div>
 
-function InputBox({ label, value, onChange, step, disabled }) {
-  return (
-    <div>
-      <div className="text-xs text-slate-500 mb-0.5">{label}</div>
-      <input type="number" step={step} value={value} onChange={e => onChange(e.target.value)} disabled={disabled}
-        className="w-full px-2 py-1.5 border-2 border-slate-200 rounded-lg outline-none focus:border-emerald-500 text-sm disabled:bg-slate-50" />
-    </div>
-  );
-}
+            <div className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-2xl shadow-lg p-4 md:p-5 mb-4 text-white">
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div><div className="text-sm opacity-90">整體學習進度</div><div className="text-2xl md:text-3xl font-bold">{totalSteps} / 6 個步驟</div></div>
+                <div className="text-right"><div className="text-4xl md:text-5xl font-bold">{Math.round(totalSteps / 6 * 100)}%</div></div>
+              </div>
+              <div className="mt-3 bg-white/20 rounded-full h-2 overflow-hidden">
+                <div className="bg-white h-full rounded-full transition-all" style={{ width: `${totalSteps / 6 * 100}%` }} />
+              </div>
+            </div>
 
-// ============================================================
-// REPORT
-// ============================================================
-function ReportPage({ student, data, onBack }) {
-  return (
-    <div className="p-3 md:p-5">
-      <div className="max-w-4xl mx-auto">
-        <div className="bg-white rounded-2xl shadow-md p-4 mb-4 border border-slate-200 flex items-center justify-between flex-wrap gap-2">
-          <button onClick={onBack} className="flex items-center gap-1 text-sm text-slate-600 hover:bg-slate-100 px-3 py-1.5 rounded-lg">
-            <ArrowLeft size={14} /> 返回
-          </button>
-          <div className="text-xs text-slate-500 flex items-center gap-1">
-            <Cloud size={12} className="text-emerald-500" /> 完整資料已儲存到 Google Sheet 及 Drive
-          </div>
-        </div>
+            <div className="bg-white rounded-2xl shadow-md p-5 mb-4 border border-slate-200">
+              <h2 className="font-bold text-slate-800 mb-3 flex items-center gap-2"><ClipboardCheck size={18} className="text-indigo-600" /> 學習流程</h2>
+              <div className="grid md:grid-cols-3 gap-3">
+                <StepIntro num="1" icon={<Camera size={20} />} color="rose" title="紙本計算" desc="工作紙影相 → 上傳 Drive" />
+                <StepIntro num="2" icon={<Code2 size={20} />} color="indigo" title="Python 編程" desc="iPad 編寫程式 → 存入 Sheet" />
+                <StepIntro num="3" icon={<Ruler size={20} />} color="emerald" title="實地量度" desc="操場量度 → 記錄到 Sheet" />
+              </div>
+            </div>
 
-        <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 rounded-2xl shadow-lg p-6 text-white mb-4">
-          <div className="flex items-center gap-2 mb-3"><FileText size={24} /><h1 className="text-2xl font-bold">學習報告</h1></div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-            <div><div className="opacity-80 text-xs">姓名</div><div className="font-bold">{student.name}</div></div>
-            <div><div className="opacity-80 text-xs">班別</div><div className="font-bold">{student.cls}</div></div>
-            <div><div className="opacity-80 text-xs">學號</div><div className="font-bold">{student.num}</div></div>
-            <div><div className="opacity-80 text-xs">組別</div><div className="font-bold">{student.group || '—'}</div></div>
-          </div>
-        </div>
+            <div className="grid md:grid-cols-2 gap-4 mb-4">
+              <TaskCard taskKey="task1" icon={<Home size={22} />} title="任務一：陰雨操場" color="emerald" progress={taskProgress('task1')} data={data.task1} onClick={() => onSelectTask('task1')} />
+              <TaskCard taskKey="task2" icon={<Building2 size={22} />} title="任務二：學校大樓" color="blue" progress={taskProgress('task2')} data={data.task2} onClick={() => onSelectTask('task2')} />
+            </div>
 
-        {['task1', 'task2'].map(t => <TaskReport key={t} taskKey={t} data={data[t]} />)}
-      </div>
-    </div>
-  );
-}
-
-function TaskReport({ taskKey, data }) {
-  const title = taskKey === 'task1' ? '任務一：陰雨操場' : '任務二：學校大樓';
-  const icon = taskKey === 'task1' ? <Home size={18} /> : <Building2 size={18} />;
-  const done = [data.step1, data.step2, data.step3].filter(Boolean).length;
-
-  return (
-    <div className="bg-white rounded-2xl shadow-md p-5 mb-4 border border-slate-200">
-      <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-        <h2 className="font-bold text-slate-800 text-lg flex items-center gap-2">{icon} {title}</h2>
-        <span className={`px-3 py-1 rounded-full text-sm font-bold ${done === 3 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>
-          {done}/3 完成
-        </span>
-      </div>
-
-      <div className="border-l-4 border-rose-400 pl-3 mb-3">
-        <div className="font-bold text-slate-700 text-sm flex items-center gap-1 mb-1">
-          <Camera size={14} /> 步驟 1：紙本計算
-          {data.step1?.synced && <CloudBadge status="success" />}
-        </div>
-        {data.step1 ? (
-          <>
-            {data.step1.photoUrl && (
-              <a href={data.step1.photoUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline flex items-center gap-1 mb-1">
-                <Cloud size={12} /> 在 Google Drive 開啟相片
-              </a>
+            {allDone && (
+              <div className="bg-gradient-to-r from-amber-400 to-orange-500 rounded-2xl shadow-lg p-5 text-white flex items-center justify-between flex-wrap gap-3 mb-3">
+                <div className="flex items-center gap-3"><Trophy size={32} /><div><div className="font-bold text-lg">🎉 完成所有任務！</div><div className="text-sm opacity-90">所有資料已上傳雲端</div></div></div>
+                <button onClick={onViewReport} className="bg-white text-orange-600 px-4 py-2 rounded-lg font-bold hover:shadow-lg transition flex items-center gap-1"><FileText size={16} /> 查看報告</button>
+              </div>
             )}
-            {data.step1.photo && <img src={data.step1.photo.src} alt="工作紙" className="max-h-48 rounded border border-slate-200" />}
-            {data.step1.notes && <div className="text-sm text-slate-700 mt-2 bg-slate-50 p-2 rounded">📝 {data.step1.notes}</div>}
-          </>
-        ) : <div className="text-sm text-slate-400">未完成</div>}
-      </div>
-
-      <div className="border-l-4 border-indigo-400 pl-3 mb-3">
-        <div className="font-bold text-slate-700 text-sm flex items-center gap-1 mb-1">
-          <Code2 size={14} /> 步驟 2：Python {data.step2?.synced && <CloudBadge status="success" />}
-        </div>
-        {data.step2 ? (
-          <div className="bg-slate-900 text-emerald-300 font-mono text-xs p-2 rounded">
-            <div>height = {data.step2.code.formula}</div>
-            <div className="text-yellow-300 mt-1">→ {data.step2.output.total.toFixed(3)} m</div>
+            {!allDone && totalSteps > 0 && (
+              <button onClick={onViewReport} className="w-full bg-white border-2 border-slate-200 hover:border-indigo-400 rounded-xl p-3 text-sm text-slate-600 font-semibold flex items-center justify-center gap-2 transition"><FileText size={14} /> 查看目前進度</button>
+            )}
           </div>
-        ) : <div className="text-sm text-slate-400">未完成</div>}
-      </div>
-
-      <div className="border-l-4 border-emerald-400 pl-3">
-        <div className="font-bold text-slate-700 text-sm flex items-center gap-1 mb-1">
-          <Ruler size={14} /> 步驟 3：實測 {data.step3?.synced && <CloudBadge status="success" />}
         </div>
-        {data.step3 ? (
-          <div className="bg-emerald-50 p-2 rounded text-sm">
-            <div>📊 有效數據：<strong>{data.step3.validCount}</strong> 組</div>
-            <div>📏 平均：<strong className="text-emerald-700 text-lg">{data.step3.average?.toFixed(2)} m</strong></div>
-            {data.step3.reflection && <div className="text-xs text-slate-700 mt-2 bg-white p-2 rounded">💭 {data.step3.reflection}</div>}
+      );
+    }
+
+    function StepIntro({ num, icon, color, title, desc }) {
+      const colors = { rose: 'bg-rose-50 border-rose-200 text-rose-700', indigo: 'bg-indigo-50 border-indigo-200 text-indigo-700', emerald: 'bg-emerald-50 border-emerald-200 text-emerald-700' };
+      return (
+        <div className={`rounded-xl border-2 p-3 ${colors[color]}`}>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="bg-white w-7 h-7 rounded-full flex items-center justify-center font-bold text-sm border-2 border-current">{num}</span>
+            {icon}<span className="font-bold">{title}</span>
           </div>
-        ) : <div className="text-sm text-slate-400">未完成</div>}
-      </div>
-    </div>
-  );
-}
+          <p className="text-xs text-slate-600 ml-1">{desc}</p>
+        </div>
+      );
+    }
+
+    function TaskCard({ taskKey, icon, title, color, progress, data, onClick }) {
+      const colorMap = { emerald: { bg: 'from-emerald-500 to-teal-500', border: 'border-emerald-200', text: 'text-emerald-700' }, blue: { bg: 'from-blue-500 to-indigo-500', border: 'border-blue-200', text: 'text-blue-700' } };
+      const c = colorMap[color];
+      return (
+        <button onClick={onClick} className={`text-left bg-white rounded-2xl shadow-md hover:shadow-xl border-2 ${c.border} transition overflow-hidden`}>
+          <div className={`bg-gradient-to-r ${c.bg} p-4 text-white`}>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">{icon}<span className="font-bold">{title}</span></div>
+              <span className="bg-white/20 px-2 py-0.5 rounded text-xs font-bold">{progress}/3</span>
+            </div>
+          </div>
+          <div className="p-4 space-y-2">
+            <MiniStep done={!!data.step1} label="紙本計算 + 影相" icon={<Camera size={14} />} />
+            <MiniStep done={!!data.step2} label="Python 編程" icon={<Code2 size={14} />} />
+            <MiniStep done={!!data.step3} label="實地量度數據" icon={<Ruler size={14} />} />
+            <div className={`text-xs ${c.text} font-bold flex items-center gap-1 pt-1`}>{progress === 3 ? '✓ 已完成' : '繼續學習'} <ArrowRight size={12} /></div>
+          </div>
+        </button>
+      );
+    }
+
+    function MiniStep({ done, label, icon }) {
+      return (
+        <div className="flex items-center gap-2 text-sm">
+          {done ? <CheckCircle2 size={16} className="text-emerald-500" /> : <div className="w-4 h-4 rounded-full border-2 border-slate-300" />}
+          <span className={done ? 'text-slate-700' : 'text-slate-400'}>{icon}</span>
+          <span className={done ? 'text-slate-700 font-semibold' : 'text-slate-500'}>{label}</span>
+        </div>
+      );
+    }
+
+    // ============================================================
+    // TASK FLOW
+    // ============================================================
+    function TaskFlow({ student, task, step, setStep, taskData, updateData, onBack }) {
+      const taskInfo = { task1: { title: '任務一：陰雨操場', icon: <Home size={18} /> }, task2: { title: '任務二：學校大樓', icon: <Building2 size={18} /> } }[task];
+
+      return (
+        <div className="p-3 md:p-5">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white rounded-2xl shadow-md p-4 mb-4 border border-slate-200 flex items-center justify-between flex-wrap gap-3">
+              <button onClick={onBack} className="flex items-center gap-1 text-sm text-slate-600 hover:bg-slate-100 px-3 py-1.5 rounded-lg"><ArrowLeft size={14} /> 返回主頁</button>
+              <div className="flex items-center gap-2 font-bold text-slate-800">{taskInfo.icon} {taskInfo.title}</div>
+              <div className="text-xs text-slate-500">{student.name} · {student.cls}{student.num}</div>
+            </div>
+
+            <div className="bg-white rounded-2xl shadow-md p-4 mb-4 border border-slate-200">
+              <div className="flex items-center justify-between gap-2">
+                <StepDot num={1} label="紙本計算" active={step === 1} done={!!taskData.step1} onClick={() => setStep(1)} />
+                <div className={`flex-1 h-1 rounded ${taskData.step1 ? 'bg-emerald-400' : 'bg-slate-200'}`} />
+                <StepDot num={2} label="Python" active={step === 2} done={!!taskData.step2} onClick={() => taskData.step1 && setStep(2)} locked={!taskData.step1} />
+                <div className={`flex-1 h-1 rounded ${taskData.step2 ? 'bg-emerald-400' : 'bg-slate-200'}`} />
+                <StepDot num={3} label="實測數據" active={step === 3} done={!!taskData.step3} onClick={() => taskData.step2 && setStep(3)} locked={!taskData.step2} />
+              </div>
+            </div>
+
+            {step === 1 && <Step1Photo student={student} task={task} data={taskData.step1} onSave={(v) => { updateData('step1', v); setStep(2); }} />}
+            {step === 2 && <Step2Python student={student} task={task} data={taskData.step2} onSave={(v) => { updateData('step2', v); setStep(3); }} />}
+            {step === 3 && <Step3Measurement student={student} task={task} data={taskData.step3} pythonData={taskData.step2} onSave={(v) => { updateData('step3', v); onBack(); }} />}
+          </div>
+        </div>
+      );
+    }
+
+    function StepDot({ num, label, active, done, locked, onClick }) {
+      return (
+        <button onClick={onClick} disabled={locked} className={`flex flex-col items-center gap-1 ${locked ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}>
+          <div className={`w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold text-sm transition ${done ? 'bg-emerald-500 text-white' : active ? 'bg-indigo-500 text-white ring-4 ring-indigo-100' : 'bg-slate-200 text-slate-500'}`}>
+            {locked ? <Lock size={14} /> : done ? <CheckCircle2 size={18} /> : num}
+          </div>
+          <span className={`text-xs font-semibold ${active ? 'text-indigo-700' : done ? 'text-emerald-700' : 'text-slate-500'}`}>{label}</span>
+        </button>
+      );
+    }
+
+    // ============================================================
+    // STEP 1
+    // ============================================================
+    function Step1Photo({ student, task, data, onSave }) {
+      const [photo, setPhoto] = useState(data?.photo || null);
+      const [notes, setNotes] = useState(data?.notes || '');
+      const [err, setErr] = useState('');
+      const [syncing, setSyncing] = useState(false);
+      const fileRef = useRef(null);
+
+      const handleFile = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        if (file.size > 5 * 1024 * 1024) { setErr('檔案太大（請小於 5MB）'); return; }
+        const reader = new FileReader();
+        reader.onload = (ev) => { setPhoto({ name: file.name, src: ev.target.result }); setErr(''); };
+        reader.readAsDataURL(file);
+      };
+
+      const submit = async () => {
+        if (!photo) { setErr('請先上傳工作紙相片'); return; }
+        setSyncing(true); setErr('');
+        try {
+          const result = await apiCall('saveStep1', { student, task, photo, notes });
+          onSave({ photo, notes, photoUrl: result.photoUrl, photoId: result.photoId, submittedAt: new Date().toLocaleString('zh-HK'), synced: true });
+        } catch (e) {
+          if (confirm(`雲端上傳失敗：${e.message}\n\n是否仍要繼續到下一步？(資料只在本機)`)) {
+            onSave({ photo, notes, submittedAt: new Date().toLocaleString('zh-HK'), synced: false, syncError: e.message });
+          }
+        } finally { setSyncing(false); }
+      };
+
+      return (
+        <div className="bg-white rounded-2xl shadow-md p-5 border border-slate-200">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="bg-rose-100 text-rose-700 p-2 rounded-lg"><Camera size={20} /></div>
+            <div className="flex-1">
+              <h2 className="font-bold text-slate-800 flex items-center gap-2">步驟 1：紙本數學計算 <Cloud size={14} className="text-blue-500" /></h2>
+              <p className="text-xs text-slate-500">手寫推導 → 拍照 → 自動上傳到 Google Drive</p>
+            </div>
+          </div>
+
+          <div className="bg-amber-50 border-l-4 border-amber-400 rounded-r-lg p-3 mb-4">
+            <div className="font-bold text-amber-900 text-sm mb-2 flex items-center gap-1"><Lightbulb size={14} /> 任務指引</div>
+            <div className="text-sm text-slate-700 space-y-1">
+              {task === 'task1' ? (<>
+                <div>• 在工作紙畫出三角形示意圖</div>
+                <div>• 推導 <strong>陰雨操場高度 = 5 × tan(θ) + h₂</strong></div>
+                <div>• 拍清楚整張工作紙</div>
+              </>) : (<>
+                <div>• 畫出兩點仰角示意圖</div>
+                <div>• 推導 <strong>EF = BD ÷ (1/tan x − 1/tan y)</strong></div>
+                <div>• 拍清楚整張工作紙</div>
+              </>)}
+            </div>
+          </div>
+
+          <input type="file" accept="image/*" capture="environment" ref={fileRef} onChange={handleFile} className="hidden" />
+          {!photo ? (
+            <button onClick={() => fileRef.current?.click()} className="w-full border-2 border-dashed border-slate-300 hover:border-rose-400 hover:bg-rose-50 rounded-xl p-8 transition flex flex-col items-center gap-2 mb-4">
+              <Upload size={32} className="text-slate-400" />
+              <div className="font-bold text-slate-700">點擊上傳工作紙相片</div>
+              <div className="text-xs text-slate-500">將上傳到 Google Drive 個人資料夾</div>
+            </button>
+          ) : (
+            <div className="border-2 border-emerald-300 rounded-xl overflow-hidden bg-slate-50 mb-4">
+              <div className="bg-emerald-50 px-3 py-2 flex items-center justify-between">
+                <div className="flex items-center gap-2 text-sm"><CheckCircle2 size={16} className="text-emerald-600" /><span className="font-semibold text-emerald-700 truncate">{photo.name}</span></div>
+                <button onClick={() => { setPhoto(null); if (fileRef.current) fileRef.current.value = ''; }} className="text-rose-500 hover:bg-rose-100 p-1 rounded"><X size={16} /></button>
+              </div>
+              <img src={photo.src} alt="工作紙" className="w-full max-h-96 object-contain bg-white" />
+            </div>
+          )}
+
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-slate-700 mb-1">備註（選填）</label>
+            <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="例如：我用了 tan 比..." className="w-full p-3 border-2 border-slate-200 rounded-lg outline-none focus:border-rose-400 text-sm resize-none" rows={3} />
+          </div>
+
+          {err && <div className="bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-lg p-2 mb-3 flex items-center gap-1"><AlertCircle size={14} />{err}</div>}
+
+          <button onClick={submit} disabled={syncing} className="w-full bg-gradient-to-r from-rose-500 to-pink-500 hover:shadow-lg text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50">
+            {syncing ? <><Loader2 size={16} className="animate-spin" /> 上傳到 Google Drive...</> : <>提交並進入下一步 <ArrowRight size={16} /></>}
+          </button>
+        </div>
+      );
+    }
+
+    // ============================================================
+    // STEP 2
+    // ============================================================
+    function Step2Python({ student, task, data, onSave }) {
+      const [code, setCode] = useState(data?.code || (task === 'task1' ? { theta: '', h2: '', formula: '' } : { BD: '', x: '', y: '', eye: '', formula: '' }));
+      const [output, setOutput] = useState(data?.output || null);
+      const [showHint, setShowHint] = useState(false);
+      const [syncing, setSyncing] = useState(false);
+
+      const validateTask1 = () => {
+        const t = parseFloat(code.theta), h2 = parseFloat(code.h2);
+        const formula = code.formula.replace(/\s/g, '');
+        if (isNaN(t) || isNaN(h2)) return { error: '請輸入 theta 和 h2' };
+        if (!formula) return { error: '請填寫公式' };
+        const valid = ['5*math.tan(math.radians(theta))+h2', 'h2+5*math.tan(math.radians(theta))'];
+        if (!valid.includes(formula)) return { error: '公式不正確。提示：5 × tan(θ) + h₂' };
+        const h1 = 5 * Math.tan(t * Math.PI / 180);
+        return { success: true, total: h1 + h2, h1, t, h2, formula };
+      };
+
+      const validateTask2 = () => {
+        const BD = parseFloat(code.BD), x = parseFloat(code.x), y = parseFloat(code.y), eye = parseFloat(code.eye);
+        const formula = code.formula.replace(/\s/g, '');
+        if ([BD, x, y, eye].some(isNaN)) return { error: '請輸入所有變數' };
+        if (x >= y) return { error: 'x 必須 < y' };
+        if (!formula) return { error: '請填寫公式' };
+        const valid = ['BD/(1/math.tan(math.radians(x))-1/math.tan(math.radians(y)))+eye', 'eye+BD/(1/math.tan(math.radians(x))-1/math.tan(math.radians(y)))'];
+        if (!valid.includes(formula)) return { error: '公式不正確。提示：BD ÷ (1/tan x − 1/tan y) + eye' };
+        const tanX = Math.tan(x * Math.PI / 180), tanY = Math.tan(y * Math.PI / 180);
+        const EF = BD / (1 / tanX - 1 / tanY);
+        return { success: true, total: EF + eye, EF, BD, x, y, eye, formula };
+      };
+
+      const run = () => setOutput(task === 'task1' ? validateTask1() : validateTask2());
+
+      const submit = async () => {
+        if (!output?.success) { setOutput({ error: '請先成功執行程式' }); return; }
+        setSyncing(true);
+        try {
+          await apiCall('saveStep2', { student, task, code, output });
+          onSave({ code, output, submittedAt: new Date().toLocaleString('zh-HK'), synced: true });
+        } catch (e) {
+          if (confirm(`雲端上傳失敗：${e.message}\n\n是否仍要繼續？`)) {
+            onSave({ code, output, submittedAt: new Date().toLocaleString('zh-HK'), synced: false });
+          }
+        } finally { setSyncing(false); }
+      };
+
+      return (
+        <div className="bg-white rounded-2xl shadow-md p-5 border border-slate-200">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="bg-indigo-100 text-indigo-700 p-2 rounded-lg"><Code2 size={20} /></div>
+            <div>
+              <h2 className="font-bold text-slate-800 flex items-center gap-2">步驟 2：Python 編程 <Cloud size={14} className="text-blue-500" /></h2>
+              <p className="text-xs text-slate-500">把公式寫成 Python 程式 → 存入 Sheet</p>
+            </div>
+          </div>
+
+          <div className="bg-slate-900 rounded-xl overflow-hidden mb-3 shadow-lg">
+            <div className="bg-slate-800 px-3 py-2 flex items-center gap-2"><Terminal size={14} className="text-emerald-400" /><span className="text-xs text-slate-300 font-mono">{task === 'task1' ? 'covered_playground.py' : 'school_height.py'}</span></div>
+            <div className="p-4 font-mono text-sm text-slate-200 space-y-1 overflow-x-auto">
+              <div><span className="text-purple-400">import</span> <span className="text-sky-300">math</span></div>
+              {task === 'task1' ? (<>
+                <CodeInput label="theta" placeholder="45" value={code.theta} onChange={v => setCode({ ...code, theta: v })} comment="# 仰角 (度)" />
+                <CodeInput label="h2" step="0.01" placeholder="1.55" value={code.h2} onChange={v => setCode({ ...code, h2: v })} comment="# 眼睛高度" />
+              </>) : (<>
+                <CodeInput label="BD" placeholder="9" value={code.BD} onChange={v => setCode({ ...code, BD: v })} comment="# 兩觀察點距離" />
+                <CodeInput label="x" placeholder="25" value={code.x} onChange={v => setCode({ ...code, x: v })} comment="# 較小仰角" />
+                <CodeInput label="y" placeholder="45" value={code.y} onChange={v => setCode({ ...code, y: v })} comment="# 較大仰角" />
+                <CodeInput label="eye" step="0.01" placeholder="1.55" value={code.eye} onChange={v => setCode({ ...code, eye: v })} comment="# 眼睛高度" />
+              </>)}
+              <div className="text-slate-500 mt-1"># 計算公式</div>
+              <div className="flex items-start flex-wrap gap-1">
+                <span className="text-emerald-300">height</span><span className="text-slate-400">=</span>
+                <input type="text" value={code.formula} onChange={e => setCode({ ...code, formula: e.target.value })}
+                  placeholder={task === 'task1' ? '5*math.tan(math.radians(theta))+h2' : 'BD/(1/math.tan(math.radians(x))-1/math.tan(math.radians(y)))+eye'}
+                  className="bg-slate-800 border border-slate-700 rounded px-2 py-0.5 flex-1 min-w-0 text-yellow-300 font-mono text-xs outline-none focus:border-emerald-500" />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-2 mb-3 flex-wrap">
+            <button onClick={run} className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-4 py-2 rounded-lg font-bold text-sm hover:shadow-lg"><Play size={14} /> 執行</button>
+            <button onClick={() => setShowHint(!showHint)} className="flex items-center gap-1 bg-amber-100 text-amber-700 px-3 py-2 rounded-lg text-sm hover:bg-amber-200"><Lightbulb size={14} /> 提示</button>
+          </div>
+
+          {showHint && (
+            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3 text-xs font-mono">
+              {task === 'task1' ? (<>height = <code>5*math.tan(math.radians(theta))+h2</code></>) : (<>height = <code>BD/(1/math.tan(math.radians(x))-1/math.tan(math.radians(y)))+eye</code></>)}
+            </div>
+          )}
+
+          {output && (
+            <div className={`rounded-xl p-3 mb-3 ${output.error ? 'bg-rose-50 border border-rose-200' : 'bg-slate-900'}`}>
+              {output.error ? <div className="text-rose-700 text-sm flex items-start gap-2"><AlertCircle size={16} />{output.error}</div> : (
+                <div className="font-mono text-sm">
+                  <div className="text-yellow-300 font-bold">高度 = {output.total.toFixed(3)} m</div>
+                  <div className="text-emerald-300 text-xs mt-2 flex items-center gap-1"><CheckCircle2 size={12} /> 執行成功</div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <button onClick={submit} disabled={!output?.success || syncing} className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-40">
+            {syncing ? <><Loader2 size={16} className="animate-spin" /> 上傳中...</> : <>提交並進入下一步 <ArrowRight size={16} /></>}
+          </button>
+        </div>
+      );
+    }
+
+    function CodeInput({ label, placeholder, value, onChange, step, comment }) {
+      return (<>
+        <div className="text-slate-500">{comment}</div>
+        <div className="flex items-center flex-wrap gap-1">
+          <span className="text-emerald-300">{label}</span><span className="text-slate-400">=</span>
+          <input type="number" step={step} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+            className="bg-slate-800 border border-slate-700 rounded px-2 py-0.5 w-20 text-yellow-300 outline-none focus:border-emerald-500" />
+        </div>
+      </>);
+    }
+
+    // ============================================================
+    // STEP 3
+    // ============================================================
+    function Step3Measurement({ student, task, data, pythonData, onSave }) {
+      const [measurements, setMeasurements] = useState(data?.measurements || (task === 'task1'
+        ? [{ id: 1, theta: '', h2: '' }, { id: 2, theta: '', h2: '' }, { id: 3, theta: '', h2: '' }]
+        : [{ id: 1, label: '排球場 (BD=9)', BD: '9', x: '', y: '' }, { id: 2, label: '籃球場 (BD=15)', BD: '15', x: '', y: '' }, { id: 3, label: '自訂', BD: '', x: '', y: '' }]
+      ));
+      const [eyeLevel, setEyeLevel] = useState(data?.eyeLevel || '');
+      const [reflection, setReflection] = useState(data?.reflection || '');
+      const [err, setErr] = useState('');
+      const [syncing, setSyncing] = useState(false);
+
+      const update = (id, key, val) => setMeasurements(measurements.map(m => m.id === id ? { ...m, [key]: val } : m));
+
+      const calcTask1 = (m) => {
+        const t = parseFloat(m.theta), h2 = parseFloat(m.h2);
+        if (isNaN(t) || isNaN(h2)) return null;
+        return { h1: 5 * Math.tan(t * Math.PI / 180), total: 5 * Math.tan(t * Math.PI / 180) + h2 };
+      };
+      const calcTask2 = (m) => {
+        const BD = parseFloat(m.BD), x = parseFloat(m.x), y = parseFloat(m.y), eye = parseFloat(eyeLevel);
+        if ([BD, x, y, eye].some(isNaN)) return null;
+        if (x >= y) return { error: 'x 必須 < y' };
+        const EF = BD / (1 / Math.tan(x * Math.PI / 180) - 1 / Math.tan(y * Math.PI / 180));
+        return { EF, total: EF + eye };
+      };
+
+      const results = measurements.map(m => ({ ...m, result: task === 'task1' ? calcTask1(m) : calcTask2(m) }));
+      const valid = results.filter(r => r.result && !r.result.error && isFinite(r.result.total));
+      const average = valid.length > 0 ? valid.reduce((s, r) => s + r.result.total, 0) / valid.length : null;
+
+      const submit = async () => {
+        if (valid.length < 2) { setErr('請至少完成 2 組有效數據'); return; }
+        setSyncing(true); setErr('');
+        try {
+          await apiCall('saveStep3', { student, task, measurements, eyeLevel, reflection, average, validCount: valid.length, pythonResult: pythonData?.output?.total || null });
+          onSave({ measurements, eyeLevel, reflection, average, validCount: valid.length, submittedAt: new Date().toLocaleString('zh-HK'), synced: true });
+        } catch (e) {
+          if (confirm(`雲端上傳失敗：${e.message}\n\n是否仍要完成任務？`)) {
+            onSave({ measurements, eyeLevel, reflection, average, validCount: valid.length, submittedAt: new Date().toLocaleString('zh-HK'), synced: false });
+          }
+        } finally { setSyncing(false); }
+      };
+
+      return (
+        <div className="bg-white rounded-2xl shadow-md p-5 border border-slate-200">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="bg-emerald-100 text-emerald-700 p-2 rounded-lg"><Ruler size={20} /></div>
+            <div>
+              <h2 className="font-bold text-slate-800 flex items-center gap-2">步驟 3：實地量度 <Cloud size={14} className="text-blue-500" /></h2>
+              <p className="text-xs text-slate-500">操場實測 → 自動上傳到 Google Sheet</p>
+            </div>
+          </div>
+
+          <div className="bg-emerald-50 border-l-4 border-emerald-400 rounded-r-lg p-3 mb-4 text-sm text-slate-700">📏 至少做 <strong>2-3 組</strong>，會自動計算平均並對比 Python 結果</div>
+
+          {task === 'task2' && (
+            <div className="bg-slate-50 rounded-xl p-3 mb-4 flex items-center gap-3 flex-wrap">
+              <label className="font-semibold text-slate-700 text-sm">眼睛高度：</label>
+              <input type="number" step="0.01" value={eyeLevel} onChange={e => setEyeLevel(e.target.value)} placeholder="1.55" className="w-28 px-2 py-1.5 border-2 border-slate-300 rounded-lg outline-none focus:border-emerald-500" />
+              <span className="text-slate-600 text-sm">米</span>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            {measurements.map((m, i) => {
+              const r = results[i].result;
+              return (
+                <div key={m.id} className="border-2 border-slate-200 rounded-xl p-3 hover:border-emerald-300 transition">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-bold text-slate-700 text-sm">第 {m.id} 組{m.label ? ` · ${m.label}` : ''}</span>
+                    {r && !r.error && <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded font-bold">= {r.total.toFixed(2)} m</span>}
+                    {r?.error && <span className="text-xs bg-rose-100 text-rose-700 px-2 py-0.5 rounded">⚠ {r.error}</span>}
+                  </div>
+                  {task === 'task1' ? (
+                    <div className="grid grid-cols-2 gap-2">
+                      <InputBox label="仰角 θ (°)" value={m.theta} onChange={v => update(m.id, 'theta', v)} step="0.1" />
+                      <InputBox label="眼睛高度 (m)" value={m.h2} onChange={v => update(m.id, 'h2', v)} step="0.01" />
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-2">
+                      <InputBox label="BD (m)" value={m.BD} onChange={v => update(m.id, 'BD', v)} step="0.1" disabled={m.id <= 2} />
+                      <InputBox label="仰角 x (°)" value={m.x} onChange={v => update(m.id, 'x', v)} step="0.1" />
+                      <InputBox label="仰角 y (°)" value={m.y} onChange={v => update(m.id, 'y', v)} step="0.1" />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {average !== null && pythonData?.output?.success && (
+            <div className="mt-4 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl p-4 text-white">
+              <div className="font-bold mb-2 flex items-center gap-2"><Trophy size={18} /> 實測 vs Python</div>
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div><div className="text-xs opacity-80">實測平均</div><div className="text-2xl font-bold">{average.toFixed(2)} m</div></div>
+                <div><div className="text-xs opacity-80">Python</div><div className="text-2xl font-bold">{pythonData.output.total.toFixed(2)} m</div></div>
+                <div><div className="text-xs opacity-80">誤差</div><div className="text-2xl font-bold">{Math.abs(average - pythonData.output.total).toFixed(2)} m</div></div>
+              </div>
+            </div>
+          )}
+
+          <div className="mt-4">
+            <label className="block text-sm font-semibold text-slate-700 mb-1">學習反思</label>
+            <textarea value={reflection} onChange={e => setReflection(e.target.value)} placeholder="實測與 Python 的誤差來源..." className="w-full p-3 border-2 border-slate-200 rounded-lg outline-none focus:border-emerald-500 text-sm resize-none" rows={3} />
+          </div>
+
+          {err && <div className="bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-lg p-2 mt-3 flex items-center gap-1"><AlertCircle size={14} />{err}</div>}
+
+          <button onClick={submit} disabled={syncing} className="w-full mt-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:shadow-lg text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50">
+            {syncing ? <><Loader2 size={16} className="animate-spin" /> 上傳到 Google Sheet...</> : <><CheckCircle2 size={18} /> 完成任務並上傳</>}
+          </button>
+        </div>
+      );
+    }
+
+    function InputBox({ label, value, onChange, step, disabled }) {
+      return (
+        <div>
+          <div className="text-xs text-slate-500 mb-0.5">{label}</div>
+          <input type="number" step={step} value={value} onChange={e => onChange(e.target.value)} disabled={disabled}
+            className="w-full px-2 py-1.5 border-2 border-slate-200 rounded-lg outline-none focus:border-emerald-500 text-sm disabled:bg-slate-50" />
+        </div>
+      );
+    }
+
+    // ============================================================
+    // REPORT
+    // ============================================================
+    function ReportPage({ student, data, onBack }) {
+      return (
+        <div className="p-3 md:p-5">
+          <div className="max-w-4xl mx-auto">
+            <div className="bg-white rounded-2xl shadow-md p-4 mb-4 border border-slate-200 flex items-center justify-between flex-wrap gap-2">
+              <button onClick={onBack} className="flex items-center gap-1 text-sm text-slate-600 hover:bg-slate-100 px-3 py-1.5 rounded-lg"><ArrowLeft size={14} /> 返回</button>
+              <div className="text-xs text-slate-500 flex items-center gap-1"><Cloud size={12} className="text-emerald-500" /> 完整資料已儲存到 Google Sheet 及 Drive</div>
+            </div>
+            <div className="bg-gradient-to-br from-indigo-600 via-purple-600 to-pink-600 rounded-2xl shadow-lg p-6 text-white mb-4">
+              <div className="flex items-center gap-2 mb-3"><FileText size={24} /><h1 className="text-2xl font-bold">學習報告</h1></div>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                <div><div className="opacity-80 text-xs">姓名</div><div className="font-bold">{student.name}</div></div>
+                <div><div className="opacity-80 text-xs">班別</div><div className="font-bold">{student.cls}</div></div>
+                <div><div className="opacity-80 text-xs">學號</div><div className="font-bold">{student.num}</div></div>
+                <div><div className="opacity-80 text-xs">組別</div><div className="font-bold">{student.group || '—'}</div></div>
+              </div>
+            </div>
+            {['task1', 'task2'].map(t => <TaskReport key={t} taskKey={t} data={data[t]} />)}
+          </div>
+        </div>
+      );
+    }
+
+    function TaskReport({ taskKey, data }) {
+      const title = taskKey === 'task1' ? '任務一：陰雨操場' : '任務二：學校大樓';
+      const icon = taskKey === 'task1' ? <Home size={18} /> : <Building2 size={18} />;
+      const done = [data.step1, data.step2, data.step3].filter(Boolean).length;
+
+      return (
+        <div className="bg-white rounded-2xl shadow-md p-5 mb-4 border border-slate-200">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+            <h2 className="font-bold text-slate-800 text-lg flex items-center gap-2">{icon} {title}</h2>
+            <span className={`px-3 py-1 rounded-full text-sm font-bold ${done === 3 ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'}`}>{done}/3 完成</span>
+          </div>
+          <div className="border-l-4 border-rose-400 pl-3 mb-3">
+            <div className="font-bold text-slate-700 text-sm flex items-center gap-1 mb-1"><Camera size={14} /> 步驟 1：紙本計算 {data.step1?.synced && <CloudBadge status="success" />}</div>
+            {data.step1 ? (<>
+              {data.step1.photoUrl && <a href={data.step1.photoUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline flex items-center gap-1 mb-1"><Cloud size={12} /> 在 Google Drive 開啟相片</a>}
+              {data.step1.photo && <img src={data.step1.photo.src} alt="工作紙" className="max-h-48 rounded border border-slate-200" />}
+              {data.step1.notes && <div className="text-sm text-slate-700 mt-2 bg-slate-50 p-2 rounded">📝 {data.step1.notes}</div>}
+            </>) : <div className="text-sm text-slate-400">未完成</div>}
+          </div>
+          <div className="border-l-4 border-indigo-400 pl-3 mb-3">
+            <div className="font-bold text-slate-700 text-sm flex items-center gap-1 mb-1"><Code2 size={14} /> 步驟 2：Python {data.step2?.synced && <CloudBadge status="success" />}</div>
+            {data.step2 ? (
+              <div className="bg-slate-900 text-emerald-300 font-mono text-xs p-2 rounded">
+                <div>height = {data.step2.code.formula}</div>
+                <div className="text-yellow-300 mt-1">→ {data.step2.output.total.toFixed(3)} m</div>
+              </div>
+            ) : <div className="text-sm text-slate-400">未完成</div>}
+          </div>
+          <div className="border-l-4 border-emerald-400 pl-3">
+            <div className="font-bold text-slate-700 text-sm flex items-center gap-1 mb-1"><Ruler size={14} /> 步驟 3：實測 {data.step3?.synced && <CloudBadge status="success" />}</div>
+            {data.step3 ? (
+              <div className="bg-emerald-50 p-2 rounded text-sm">
+                <div>📊 有效數據：<strong>{data.step3.validCount}</strong> 組</div>
+                <div>📏 平均：<strong className="text-emerald-700 text-lg">{data.step3.average?.toFixed(2)} m</strong></div>
+                {data.step3.reflection && <div className="text-xs text-slate-700 mt-2 bg-white p-2 rounded">💭 {data.step3.reflection}</div>}
+              </div>
+            ) : <div className="text-sm text-slate-400">未完成</div>}
+          </div>
+        </div>
+      );
+    }
+
+    // ============================================================
+    // RENDER
+    // ============================================================
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<STEMPlatform />);
+  </script>
+</body>
+</html>
