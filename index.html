@@ -694,7 +694,33 @@ function Step1Photo({ student, task, data, onSave }) {
         </div>
       </>);
     }
+    
+// ============================================================
+    // InputBox（步驟 3 用）
+    // ============================================================
+    function InputBox({ label, value, onChange, step = '0.1', disabled = false }) {
+      return (
+        <label className="block">
+          <div className="text-[11px] font-semibold text-slate-600 mb-0.5">{label}</div>
+          <input
+            type="number"
+            step={step}
+            value={value}
+            disabled={disabled}
+            onChange={e => onChange(e.target.value)}
+            placeholder={disabled ? '' : '—'}
+            className={`w-full px-2 py-1.5 border-2 rounded-lg outline-none text-sm transition ${
+              disabled
+                ? 'bg-slate-100 border-slate-200 text-slate-500 cursor-not-allowed'
+                : 'border-slate-200 focus:border-emerald-500 bg-white'
+            }`}
+          />
+          {disabled && <div className="text-[10px] text-slate-400 mt-0.5">🔒 固定值</div>}
+        </label>
+      );
+    }
 
+    
     // ============================================================
     // STEP 3 - 圖示 SVG
     // ============================================================
