@@ -26,7 +26,7 @@
     const API_URL = 'https://script.google.com/macros/s/AKfycbxQBe3uGo9tjfWLcP3QYZSb6UBbWZOrO9BHezo6mG1H35Dw9eQJsuXOUN3rcWvx7NHA/exec';
 
     // ============================================================
-    // ICON COMPONENTS（取代 lucide-react）
+    // ICON COMPONENTS
     // ============================================================
     const Icon = ({ children, size = 24, className = '' }) => (
       <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24"
@@ -112,12 +112,17 @@
         }
       };
 
-      const goToTask = (task) => { setActiveTask(task); setActiveStep(1); setPage('task'); };
+      // 🆕 支援直接跳去指定步驟
+      const goToStep = (task, step = 1) => {
+        setActiveTask(task);
+        setActiveStep(step);
+        setPage('task');
+      };
 
       return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-emerald-50">
           {page === 'login' && <LoginPage onLogin={handleLogin} />}
-          {page === 'dashboard' && <Dashboard student={student} data={data} onLogout={handleLogout} onSelectTask={goToTask} onViewReport={() => setPage('report')} />}
+          {page === 'dashboard' && <Dashboard student={student} data={data} onLogout={handleLogout} onSelectStep={goToStep} onViewReport={() => setPage('report')} />}
           {page === 'task' && <TaskFlow student={student} task={activeTask} step={activeStep} setStep={setActiveStep} taskData={data[activeTask]} updateData={(s, v) => updateData(activeTask, s, v)} onBack={() => setPage('dashboard')} />}
           {page === 'report' && <ReportPage student={student} data={data} onBack={() => setPage('dashboard')} />}
         </div>
@@ -198,7 +203,7 @@
     // ============================================================
     // DASHBOARD
     // ============================================================
-    function Dashboard({ student, data, onLogout, onSelectTask, onViewReport }) {
+    function Dashboard({ student, data, onLogout, onSelectStep, onViewReport }) {
       const taskProgress = (t) => [data[t].step1, data[t].step2, data[t].step3].filter(Boolean).length;
       const totalSteps = taskProgress('task1') + taskProgress('task2');
       const allDone = totalSteps === 6;
@@ -230,8 +235,17 @@
               </div>
             </div>
 
+            {/* 🆕 使用說明提示 */}
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-3 mb-4 flex items-start gap-2">
+              <Lightbulb size={18} className="text-blue-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-blue-900">
+                <strong>三個步驟可以獨立進行！</strong>
+                <span className="text-blue-700"> 點擊下方任務卡片中的任何一個步驟，即可直接進入。建議順序：紙本 → Python → 實測，但你可以因應課堂安排任意選擇。</span>
+              </div>
+            </div>
+
             <div className="bg-white rounded-2xl shadow-md p-5 mb-4 border border-slate-200">
-              <h2 className="font-bold text-slate-800 mb-3 flex items-center gap-2"><ClipboardCheck size={18} className="text-indigo-600" /> 學習流程</h2>
+              <h2 className="font-bold text-slate-800 mb-3 flex items-center gap-2"><ClipboardCheck size={18} className="text-indigo-600" /> 學習流程（可獨立處理）</h2>
               <div className="grid md:grid-cols-3 gap-3">
                 <StepIntro num="1" icon={<Camera size={20} />} color="rose" title="紙本計算" desc="工作紙影相 → 上傳 Drive" />
                 <StepIntro num="2" icon={<Code2 size={20} />} color="indigo" title="Python 編程" desc="iPad 編寫程式 → 存入 Sheet" />
@@ -240,8 +254,8 @@
             </div>
 
             <div className="grid md:grid-cols-2 gap-4 mb-4">
-              <TaskCard taskKey="task1" icon={<Home size={22} />} title="任務一：陰雨操場" color="emerald" progress={taskProgress('task1')} data={data.task1} onClick={() => onSelectTask('task1')} />
-              <TaskCard taskKey="task2" icon={<Building2 size={22} />} title="任務二：學校大樓" color="blue" progress={taskProgress('task2')} data={data.task2} onClick={() => onSelectTask('task2')} />
+              <TaskCard taskKey="task1" icon={<Home size={22} />} title="任務一：陰雨操場" color="emerald" progress={taskProgress('task1')} data={data.task1} onSelectStep={(s) => onSelectStep('task1', s)} />
+              <TaskCard taskKey="task2" icon={<Building2 size={22} />} title="任務二：學校大樓" color="blue" progress={taskProgress('task2')} data={data.task2} onSelectStep={(s) => onSelectStep('task2', s)} />
             </div>
 
             {allDone && (
@@ -271,34 +285,64 @@
       );
     }
 
-    function TaskCard({ taskKey, icon, title, color, progress, data, onClick }) {
-      const colorMap = { emerald: { bg: 'from-emerald-500 to-teal-500', border: 'border-emerald-200', text: 'text-emerald-700' }, blue: { bg: 'from-blue-500 to-indigo-500', border: 'border-blue-200', text: 'text-blue-700' } };
+    // 🆕 TaskCard：改為每個 mini step 都可獨立點擊
+    function TaskCard({ taskKey, icon, title, color, progress, data, onSelectStep }) {
+      const colorMap = {
+        emerald: { bg: 'from-emerald-500 to-teal-500', border: 'border-emerald-200', text: 'text-emerald-700', hoverBorder: 'hover:border-emerald-400' },
+        blue: { bg: 'from-blue-500 to-indigo-500', border: 'border-blue-200', text: 'text-blue-700', hoverBorder: 'hover:border-blue-400' },
+      };
       const c = colorMap[color];
       return (
-        <button onClick={onClick} className={`text-left bg-white rounded-2xl shadow-md hover:shadow-xl border-2 ${c.border} transition overflow-hidden`}>
+        <div className={`bg-white rounded-2xl shadow-md border-2 ${c.border} overflow-hidden`}>
           <div className={`bg-gradient-to-r ${c.bg} p-4 text-white`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">{icon}<span className="font-bold">{title}</span></div>
               <span className="bg-white/20 px-2 py-0.5 rounded text-xs font-bold">{progress}/3</span>
             </div>
           </div>
-          <div className="p-4 space-y-2">
-            <MiniStep done={!!data.step1} label="紙本計算 + 影相" icon={<Camera size={14} />} />
-            <MiniStep done={!!data.step2} label="Python 編程" icon={<Code2 size={14} />} />
-            <MiniStep done={!!data.step3} label="實地量度數據" icon={<Ruler size={14} />} />
-            <div className={`text-xs ${c.text} font-bold flex items-center gap-1 pt-1`}>{progress === 3 ? '✓ 已完成' : '繼續學習'} <ArrowRight size={12} /></div>
+          <div className="p-3 space-y-1.5">
+            <MiniStepButton done={!!data.step1} stepNum={1} label="紙本計算 + 影相" icon={<Camera size={14} />} color={color} onClick={() => onSelectStep(1)} />
+            <MiniStepButton done={!!data.step2} stepNum={2} label="Python 編程" icon={<Code2 size={14} />} color={color} onClick={() => onSelectStep(2)} />
+            <MiniStepButton done={!!data.step3} stepNum={3} label="實地量度數據" icon={<Ruler size={14} />} color={color} onClick={() => onSelectStep(3)} />
+            {progress === 3 && (
+              <div className={`text-xs ${c.text} font-bold flex items-center gap-1 pt-1 justify-center`}>
+                ✓ 已完成全部步驟
+              </div>
+            )}
           </div>
-        </button>
+        </div>
       );
     }
 
-    function MiniStep({ done, label, icon }) {
+    // 🆕 可點擊的步驟按鈕
+    function MiniStepButton({ done, stepNum, label, icon, color, onClick }) {
+      const colorMap = {
+        emerald: 'hover:bg-emerald-50 hover:border-emerald-300',
+        blue: 'hover:bg-blue-50 hover:border-blue-300',
+      };
       return (
-        <div className="flex items-center gap-2 text-sm">
-          {done ? <CheckCircle2 size={16} className="text-emerald-500" /> : <div className="w-4 h-4 rounded-full border-2 border-slate-300" />}
-          <span className={done ? 'text-slate-700' : 'text-slate-400'}>{icon}</span>
-          <span className={done ? 'text-slate-700 font-semibold' : 'text-slate-500'}>{label}</span>
-        </div>
+        <button
+          onClick={onClick}
+          className={`w-full flex items-center gap-2 p-2 rounded-lg border-2 border-transparent transition text-left group ${colorMap[color]}`}
+        >
+          <div className="flex-shrink-0">
+            {done ? (
+              <CheckCircle2 size={18} className="text-emerald-500" />
+            ) : (
+              <div className="w-4.5 h-4.5 rounded-full border-2 border-slate-300 flex items-center justify-center text-[10px] font-bold text-slate-500 w-5 h-5">
+                {stepNum}
+              </div>
+            )}
+          </div>
+          <span className={`${done ? 'text-slate-500' : 'text-slate-400'}`}>{icon}</span>
+          <span className={`flex-1 text-sm ${done ? 'text-slate-700 font-semibold' : 'text-slate-600 font-medium'}`}>
+            {label}
+          </span>
+          <span className="text-[10px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition">
+            {done ? '重看' : '進入'}
+          </span>
+          <ArrowRight size={14} className="text-slate-400 group-hover:translate-x-0.5 transition" />
+        </button>
       );
     }
 
@@ -307,6 +351,12 @@
     // ============================================================
     function TaskFlow({ student, task, step, setStep, taskData, updateData, onBack }) {
       const taskInfo = { task1: { title: '任務一：陰雨操場', icon: <Home size={18} /> }, task2: { title: '任務二：學校大樓', icon: <Building2 size={18} /> } }[task];
+
+      // 🆕 完成後返回主頁（不自動跳下一步）
+      const handleStepSave = (stepKey, value) => {
+        updateData(stepKey, value);
+        onBack();
+      };
 
       return (
         <div className="p-3 md:p-5">
@@ -317,29 +367,32 @@
               <div className="text-xs text-slate-500">{student.name} · {student.cls}{student.num}</div>
             </div>
 
+            {/* 🆕 步驟導航：全部解鎖，可自由切換 */}
             <div className="bg-white rounded-2xl shadow-md p-4 mb-4 border border-slate-200">
+              <div className="text-[11px] text-center text-slate-500 mb-2">💡 點擊任何步驟可自由切換（已獨立化）</div>
               <div className="flex items-center justify-between gap-2">
                 <StepDot num={1} label="紙本計算" active={step === 1} done={!!taskData.step1} onClick={() => setStep(1)} />
                 <div className={`flex-1 h-1 rounded ${taskData.step1 ? 'bg-emerald-400' : 'bg-slate-200'}`} />
-                <StepDot num={2} label="Python" active={step === 2} done={!!taskData.step2} onClick={() => taskData.step1 && setStep(2)} locked={!taskData.step1} />
+                <StepDot num={2} label="Python" active={step === 2} done={!!taskData.step2} onClick={() => setStep(2)} />
                 <div className={`flex-1 h-1 rounded ${taskData.step2 ? 'bg-emerald-400' : 'bg-slate-200'}`} />
-                <StepDot num={3} label="實測數據" active={step === 3} done={!!taskData.step3} onClick={() => taskData.step2 && setStep(3)} locked={!taskData.step2} />
+                <StepDot num={3} label="實測數據" active={step === 3} done={!!taskData.step3} onClick={() => setStep(3)} />
               </div>
             </div>
 
-            {step === 1 && <Step1Photo student={student} task={task} data={taskData.step1} onSave={(v) => { updateData('step1', v); setStep(2); }} />}
-            {step === 2 && <Step2Python student={student} task={task} data={taskData.step2} onSave={(v) => { updateData('step2', v); setStep(3); }} />}
-            {step === 3 && <Step3Measurement student={student} task={task} data={taskData.step3} pythonData={taskData.step2} onSave={(v) => { updateData('step3', v); onBack(); }} />}
+            {step === 1 && <Step1Photo student={student} task={task} data={taskData.step1} onSave={(v) => handleStepSave('step1', v)} />}
+            {step === 2 && <Step2Python student={student} task={task} data={taskData.step2} onSave={(v) => handleStepSave('step2', v)} />}
+            {step === 3 && <Step3Measurement student={student} task={task} data={taskData.step3} pythonData={taskData.step2} onSave={(v) => handleStepSave('step3', v)} />}
           </div>
         </div>
       );
     }
 
-    function StepDot({ num, label, active, done, locked, onClick }) {
+    // 🆕 StepDot：移除鎖定
+    function StepDot({ num, label, active, done, onClick }) {
       return (
-        <button onClick={onClick} disabled={locked} className={`flex flex-col items-center gap-1 ${locked ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer'}`}>
-          <div className={`w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold text-sm transition ${done ? 'bg-emerald-500 text-white' : active ? 'bg-indigo-500 text-white ring-4 ring-indigo-100' : 'bg-slate-200 text-slate-500'}`}>
-            {locked ? <Lock size={14} /> : done ? <CheckCircle2 size={18} /> : num}
+        <button onClick={onClick} className="flex flex-col items-center gap-1 cursor-pointer">
+          <div className={`w-9 h-9 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold text-sm transition ${done ? 'bg-emerald-500 text-white' : active ? 'bg-indigo-500 text-white ring-4 ring-indigo-100' : 'bg-slate-200 text-slate-500 hover:bg-slate-300'}`}>
+            {done ? <CheckCircle2 size={18} /> : num}
           </div>
           <span className={`text-xs font-semibold ${active ? 'text-indigo-700' : done ? 'text-emerald-700' : 'text-slate-500'}`}>{label}</span>
         </button>
@@ -349,178 +402,174 @@
     // ============================================================
     // STEP 1
     // ============================================================
-function Step1Photo({ student, task, data, onSave }) {
-  const [photos, setPhotos] = useState(data?.photos || []);
-  const [notes, setNotes] = useState(data?.notes || '');
-  const [err, setErr] = useState('');
-  const [syncing, setSyncing] = useState(false);
-  const fileRef = useRef(null);
+    function Step1Photo({ student, task, data, onSave }) {
+      const [photos, setPhotos] = useState(data?.photos || []);
+      const [notes, setNotes] = useState(data?.notes || '');
+      const [err, setErr] = useState('');
+      const [syncing, setSyncing] = useState(false);
+      const fileRef = useRef(null);
 
-  const MAX_PHOTOS = 5;
-  const MAX_SIZE_MB = 5;
+      const MAX_PHOTOS = 5;
+      const MAX_SIZE_MB = 5;
 
-  const handleFile = (e) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length === 0) return;
+      const handleFile = (e) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
 
-    // 檢查總數不超過上限
-    if (photos.length + files.length > MAX_PHOTOS) {
-      setErr(`最多只能上傳 ${MAX_PHOTOS} 張相片（目前已有 ${photos.length} 張）`);
-      if (fileRef.current) fileRef.current.value = '';
-      return;
-    }
+        if (photos.length + files.length > MAX_PHOTOS) {
+          setErr(`最多只能上傳 ${MAX_PHOTOS} 張相片（目前已有 ${photos.length} 張）`);
+          if (fileRef.current) fileRef.current.value = '';
+          return;
+        }
 
-    // 檢查每張大小
-    const tooBig = files.find(f => f.size > MAX_SIZE_MB * 1024 * 1024);
-    if (tooBig) {
-      setErr(`「${tooBig.name}」太大（請小於 ${MAX_SIZE_MB}MB）`);
-      if (fileRef.current) fileRef.current.value = '';
-      return;
-    }
+        const tooBig = files.find(f => f.size > MAX_SIZE_MB * 1024 * 1024);
+        if (tooBig) {
+          setErr(`「${tooBig.name}」太大（請小於 ${MAX_SIZE_MB}MB）`);
+          if (fileRef.current) fileRef.current.value = '';
+          return;
+        }
 
-    setErr('');
+        setErr('');
 
-    // 逐張讀取成 base64
-    const readers = files.map(file => {
-      return new Promise((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (ev) => resolve({
-          id: Date.now() + Math.random(),
-          name: file.name,
-          src: ev.target.result,
+        const readers = files.map(file => {
+          return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = (ev) => resolve({
+              id: Date.now() + Math.random(),
+              name: file.name,
+              src: ev.target.result,
+            });
+            reader.readAsDataURL(file);
+          });
         });
-        reader.readAsDataURL(file);
-      });
-    });
 
-    Promise.all(readers).then(newPhotos => {
-      setPhotos(prev => [...prev, ...newPhotos]);
-    });
-
-    if (fileRef.current) fileRef.current.value = '';
-  };
-
-  const removePhoto = (id) => {
-    setPhotos(photos.filter(p => p.id !== id));
-  };
-
-  const submit = async () => {
-    if (photos.length === 0) { setErr('請至少上傳 1 張工作紙相片'); return; }
-    setSyncing(true); setErr('');
-    try {
-      const result = await apiCall('saveStep1', { student, task, photos, notes });
-      onSave({
-        photos,
-        notes,
-        photoUrls: result.photoUrls || [],
-        submittedAt: new Date().toLocaleString('zh-HK'),
-        synced: true,
-      });
-    } catch (e) {
-      if (confirm(`雲端上傳失敗：${e.message}\n\n是否仍要繼續到下一步？(資料只在本機)`)) {
-        onSave({
-          photos,
-          notes,
-          submittedAt: new Date().toLocaleString('zh-HK'),
-          synced: false,
-          syncError: e.message,
+        Promise.all(readers).then(newPhotos => {
+          setPhotos(prev => [...prev, ...newPhotos]);
         });
-      }
-    } finally { setSyncing(false); }
-  };
 
-  return (
-    <div className="bg-white rounded-2xl shadow-md p-5 border border-slate-200">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="bg-rose-100 text-rose-700 p-2 rounded-lg"><Camera size={20} /></div>
-        <div className="flex-1">
-          <h2 className="font-bold text-slate-800 flex items-center gap-2">步驟 1：紙本數學計算 <Cloud size={14} className="text-blue-500" /></h2>
-          <p className="text-xs text-slate-500">手寫推導 → 拍照（可多張）→ 自動上傳到 Google Drive</p>
-        </div>
-      </div>
+        if (fileRef.current) fileRef.current.value = '';
+      };
 
-      <div className="bg-amber-50 border-l-4 border-amber-400 rounded-r-lg p-3 mb-4">
-        <div className="font-bold text-amber-900 text-sm mb-2 flex items-center gap-1"><Lightbulb size={14} /> 任務指引</div>
-        <div className="text-sm text-slate-700 space-y-1">
-          {task === 'task1' ? (<>
-            <div>• 在工作紙畫出三角形示意圖</div>
-            <div>• 推導 <strong>陰雨操場高度 = 5 × tan(θ) + h₂</strong></div>
-            <div>• 拍清楚整張工作紙（如內容較多可拍多張）</div>
-          </>) : (<>
-            <div>• 畫出兩點仰角示意圖</div>
-            <div>• 推導 <strong>EF = BD ÷ (1/tan x − 1/tan y)</strong></div>
-            <div>• 拍清楚整張工作紙（如內容較多可拍多張）</div>
-          </>)}
-        </div>
-      </div>
+      const removePhoto = (id) => {
+        setPhotos(photos.filter(p => p.id !== id));
+      };
 
-      <input
-        type="file"
-        accept="image/*"
-        capture="environment"
-        multiple
-        ref={fileRef}
-        onChange={handleFile}
-        className="hidden"
-      />
+      const submit = async () => {
+        if (photos.length === 0) { setErr('請至少上傳 1 張工作紙相片'); return; }
+        setSyncing(true); setErr('');
+        try {
+          const result = await apiCall('saveStep1', { student, task, photos, notes });
+          onSave({
+            photos,
+            notes,
+            photoUrls: result.photoUrls || [],
+            submittedAt: new Date().toLocaleString('zh-HK'),
+            synced: true,
+          });
+        } catch (e) {
+          if (confirm(`雲端上傳失敗：${e.message}\n\n是否仍要完成此步驟？(資料只在本機)`)) {
+            onSave({
+              photos,
+              notes,
+              submittedAt: new Date().toLocaleString('zh-HK'),
+              synced: false,
+              syncError: e.message,
+            });
+          }
+        } finally { setSyncing(false); }
+      };
 
-      {/* 已上傳的相片列表 */}
-      {photos.length > 0 && (
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
-          {photos.map((p, idx) => (
-            <div key={p.id} className="relative border-2 border-emerald-300 rounded-lg overflow-hidden bg-slate-50 group">
-              <img src={p.src} alt={p.name} className="w-full h-32 object-cover" />
-              <div className="absolute top-1 left-1 bg-emerald-500 text-white text-xs px-1.5 py-0.5 rounded font-bold">#{idx + 1}</div>
-              <button
-                onClick={() => removePhoto(p.id)}
-                className="absolute top-1 right-1 bg-rose-500 hover:bg-rose-600 text-white p-1 rounded-full shadow-md"
-                title="刪除"
-              >
-                <X size={14} />
-              </button>
-              <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs px-2 py-1 truncate">
-                {p.name}
-              </div>
+      return (
+        <div className="bg-white rounded-2xl shadow-md p-5 border border-slate-200">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="bg-rose-100 text-rose-700 p-2 rounded-lg"><Camera size={20} /></div>
+            <div className="flex-1">
+              <h2 className="font-bold text-slate-800 flex items-center gap-2">步驟 1：紙本數學計算 <Cloud size={14} className="text-blue-500" /></h2>
+              <p className="text-xs text-slate-500">手寫推導 → 拍照（可多張）→ 自動上傳到 Google Drive</p>
             </div>
-          ))}
-        </div>
-      )}
-
-      {/* 新增按鈕 */}
-      {photos.length < MAX_PHOTOS && (
-        <button
-          onClick={() => fileRef.current?.click()}
-          className="w-full border-2 border-dashed border-slate-300 hover:border-rose-400 hover:bg-rose-50 rounded-xl p-6 transition flex flex-col items-center gap-1 mb-4"
-        >
-          <Upload size={28} className="text-slate-400" />
-          <div className="font-bold text-slate-700 text-sm">
-            {photos.length === 0 ? '點擊上傳工作紙相片' : `再加相片（已有 ${photos.length}/${MAX_PHOTOS} 張）`}
           </div>
-          <div className="text-xs text-slate-500">可一次選多張，或分次拍照</div>
-        </button>
-      )}
 
-      {photos.length >= MAX_PHOTOS && (
-        <div className="bg-slate-100 text-slate-600 text-xs text-center py-2 rounded-lg mb-4">
-          已達上限 {MAX_PHOTOS} 張，如需重拍請先刪除一張
+          <div className="bg-amber-50 border-l-4 border-amber-400 rounded-r-lg p-3 mb-4">
+            <div className="font-bold text-amber-900 text-sm mb-2 flex items-center gap-1"><Lightbulb size={14} /> 任務指引</div>
+            <div className="text-sm text-slate-700 space-y-1">
+              {task === 'task1' ? (<>
+                <div>• 在工作紙畫出三角形示意圖</div>
+                <div>• 推導 <strong>陰雨操場高度 = 5 × tan(θ) + h₂</strong></div>
+                <div>• 拍清楚整張工作紙（如內容較多可拍多張）</div>
+              </>) : (<>
+                <div>• 畫出兩點仰角示意圖</div>
+                <div>• 推導 <strong>EF = BD ÷ (1/tan x − 1/tan y)</strong></div>
+                <div>• 拍清楚整張工作紙（如內容較多可拍多張）</div>
+              </>)}
+            </div>
+          </div>
+
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            multiple
+            ref={fileRef}
+            onChange={handleFile}
+            className="hidden"
+          />
+
+          {photos.length > 0 && (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-3">
+              {photos.map((p, idx) => (
+                <div key={p.id} className="relative border-2 border-emerald-300 rounded-lg overflow-hidden bg-slate-50 group">
+                  <img src={p.src} alt={p.name} className="w-full h-32 object-cover" />
+                  <div className="absolute top-1 left-1 bg-emerald-500 text-white text-xs px-1.5 py-0.5 rounded font-bold">#{idx + 1}</div>
+                  <button
+                    onClick={() => removePhoto(p.id)}
+                    className="absolute top-1 right-1 bg-rose-500 hover:bg-rose-600 text-white p-1 rounded-full shadow-md"
+                    title="刪除"
+                  >
+                    <X size={14} />
+                  </button>
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/60 text-white text-xs px-2 py-1 truncate">
+                    {p.name}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {photos.length < MAX_PHOTOS && (
+            <button
+              onClick={() => fileRef.current?.click()}
+              className="w-full border-2 border-dashed border-slate-300 hover:border-rose-400 hover:bg-rose-50 rounded-xl p-6 transition flex flex-col items-center gap-1 mb-4"
+            >
+              <Upload size={28} className="text-slate-400" />
+              <div className="font-bold text-slate-700 text-sm">
+                {photos.length === 0 ? '點擊上傳工作紙相片' : `再加相片（已有 ${photos.length}/${MAX_PHOTOS} 張）`}
+              </div>
+              <div className="text-xs text-slate-500">可一次選多張，或分次拍照</div>
+            </button>
+          )}
+
+          {photos.length >= MAX_PHOTOS && (
+            <div className="bg-slate-100 text-slate-600 text-xs text-center py-2 rounded-lg mb-4">
+              已達上限 {MAX_PHOTOS} 張，如需重拍請先刪除一張
+            </div>
+          )}
+
+          <div className="mb-4">
+            <label className="block text-sm font-semibold text-slate-700 mb-1">備註（選填）</label>
+            <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="例如：我用了 tan 比..." className="w-full p-3 border-2 border-slate-200 rounded-lg outline-none focus:border-rose-400 text-sm resize-none" rows={3} />
+          </div>
+
+          {err && <div className="bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-lg p-2 mb-3 flex items-center gap-1"><AlertCircle size={14} />{err}</div>}
+
+          {/* 🆕 改為「提交並返回主頁」 */}
+          <button onClick={submit} disabled={syncing || photos.length === 0} className="w-full bg-gradient-to-r from-rose-500 to-pink-500 hover:shadow-lg text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50">
+            {syncing ? <><Loader2 size={16} className="animate-spin" /> 上傳 {photos.length} 張到 Google Drive...</> : <><CheckCircle2 size={16} /> 提交 {photos.length > 0 && `（${photos.length} 張）`} 並返回主頁</>}
+          </button>
         </div>
-      )}
+      );
+    }
 
-      <div className="mb-4">
-        <label className="block text-sm font-semibold text-slate-700 mb-1">備註（選填）</label>
-        <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="例如：我用了 tan 比..." className="w-full p-3 border-2 border-slate-200 rounded-lg outline-none focus:border-rose-400 text-sm resize-none" rows={3} />
-      </div>
-
-      {err && <div className="bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-lg p-2 mb-3 flex items-center gap-1"><AlertCircle size={14} />{err}</div>}
-
-      <button onClick={submit} disabled={syncing || photos.length === 0} className="w-full bg-gradient-to-r from-rose-500 to-pink-500 hover:shadow-lg text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50">
-        {syncing ? <><Loader2 size={16} className="animate-spin" /> 上傳 {photos.length} 張到 Google Drive...</> : <>提交 {photos.length > 0 && `（${photos.length} 張）`} 並進入下一步 <ArrowRight size={16} /></>}
-      </button>
-    </div>
-  );
-}
-
-// ============================================================
+    // ============================================================
     // STEP 2
     // ============================================================
     function Step2Python({ student, task, data, onSave }) {
@@ -562,7 +611,7 @@ function Step1Photo({ student, task, data, onSave }) {
           await apiCall('saveStep2', { student, task, code, output });
           onSave({ code, output, submittedAt: new Date().toLocaleString('zh-HK'), synced: true });
         } catch (e) {
-          if (confirm(`雲端上傳失敗：${e.message}\n\n是否仍要繼續？`)) {
+          if (confirm(`雲端上傳失敗：${e.message}\n\n是否仍要完成此步驟？`)) {
             onSave({ code, output, submittedAt: new Date().toLocaleString('zh-HK'), synced: false });
           }
         } finally { setSyncing(false); }
@@ -578,10 +627,7 @@ function Step1Photo({ student, task, data, onSave }) {
             </div>
           </div>
 
-          {/* 🆕 左右分欄：左邊程式碼，右邊小貼士 */}
           <div className="grid lg:grid-cols-[1fr_280px] gap-4">
-
-            {/* 左：程式碼區 */}
             <div>
               <div className="bg-slate-900 rounded-xl overflow-hidden mb-3 shadow-lg">
                 <div className="bg-slate-800 px-3 py-2 flex items-center gap-2"><Terminal size={14} className="text-emerald-400" /><span className="text-xs text-slate-300 font-mono">{task === 'task1' ? 'covered_playground.py' : 'school_height.py'}</span></div>
@@ -628,7 +674,6 @@ function Step1Photo({ student, task, data, onSave }) {
               )}
             </div>
 
-            {/* 🆕 右：Python 小貼士側邊欄 */}
             <aside className="bg-gradient-to-br from-amber-50 to-yellow-50 border-2 border-amber-300 rounded-xl p-3 h-fit lg:sticky lg:top-3">
               <div className="flex items-center gap-1 mb-2 pb-2 border-b-2 border-dashed border-amber-300">
                 <Lightbulb size={16} className="text-amber-600" />
@@ -674,11 +719,11 @@ function Step1Photo({ student, task, data, onSave }) {
                 ⚠️ 別忘記最上面要 <code className="bg-slate-800 text-emerald-300 px-1 rounded">import math</code>
               </div>
             </aside>
-
           </div>
 
+          {/* 🆕 改為「提交並返回主頁」 */}
           <button onClick={submit} disabled={!output?.success || syncing} className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-40 mt-2">
-            {syncing ? <><Loader2 size={16} className="animate-spin" /> 上傳中...</> : <>提交並進入下一步 <ArrowRight size={16} /></>}
+            {syncing ? <><Loader2 size={16} className="animate-spin" /> 上傳中...</> : <><CheckCircle2 size={16} /> 提交並返回主頁</>}
           </button>
         </div>
       );
@@ -694,9 +739,9 @@ function Step1Photo({ student, task, data, onSave }) {
         </div>
       </>);
     }
-    
-// ============================================================
-    // InputBox（步驟 3 用）— 改用 const arrow function 確保作用域
+
+    // ============================================================
+    // InputBox
     // ============================================================
     const InputBox = ({ label, value, onChange, step = '0.1', disabled = false }) => (
       <label className="block">
@@ -718,31 +763,20 @@ function Step1Photo({ student, task, data, onSave }) {
       </label>
     );
 
-    
     // ============================================================
     // STEP 3 - 圖示 SVG
     // ============================================================
     const DiagramTask1 = () => (
       <svg viewBox="0 0 340 210" className="w-full h-auto max-h-52 mx-auto">
-        {/* 水平虛線 A→R */}
         <line x1="60" y1="110" x2="260" y2="110" stroke="#64748b" strokeDasharray="5 4" strokeWidth="1.5" />
-        {/* 斜邊 A→P */}
         <line x1="60" y1="110" x2="260" y2="30" stroke="#1e293b" strokeWidth="2" />
-        {/* P→R */}
         <line x1="260" y1="30" x2="260" y2="110" stroke="#1e293b" strokeWidth="2" />
-        {/* R→Q */}
         <line x1="260" y1="110" x2="260" y2="160" stroke="#1e293b" strokeWidth="2" />
-        {/* A→B */}
         <line x1="60" y1="110" x2="60" y2="160" stroke="#1e293b" strokeWidth="2" />
-        {/* B→Q */}
         <line x1="60" y1="160" x2="260" y2="160" stroke="#1e293b" strokeWidth="2" />
-        {/* R 直角 */}
         <path d="M 252 110 L 252 118 L 260 118" fill="none" stroke="#1e293b" strokeWidth="1.2" />
-        {/* Q 直角 */}
         <path d="M 252 160 L 252 152 L 260 152" fill="none" stroke="#1e293b" strokeWidth="1.2" />
-        {/* θ 角弧 */}
         <path d="M 80 110 A 20 20 0 0 0 78 103" fill="none" stroke="#dc2626" strokeWidth="1.5" />
-        {/* 總高度箭頭 ? m */}
         <line x1="295" y1="30" x2="295" y2="160" stroke="#dc2626" strokeWidth="1.5" markerEnd="url(#ar1)" markerStart="url(#ar1s)" />
         <defs>
           <marker id="ar1" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto">
@@ -752,9 +786,7 @@ function Step1Photo({ student, task, data, onSave }) {
             <path d="M 0 0 L 10 5 L 0 10 z" fill="#dc2626" />
           </marker>
         </defs>
-        {/* h1 箭頭 */}
         <line x1="272" y1="30" x2="272" y2="110" stroke="#2563eb" strokeWidth="1.2" />
-        {/* 標籤 */}
         <text x="264" y="24" fontSize="13" fontWeight="bold">P</text>
         <text x="265" y="108" fontSize="12" fontWeight="bold">R</text>
         <text x="265" y="155" fontSize="12" fontWeight="bold">Q</text>
@@ -770,29 +802,17 @@ function Step1Photo({ student, task, data, onSave }) {
 
     const DiagramTask2 = () => (
       <svg viewBox="0 0 380 240" className="w-full h-auto max-h-56 mx-auto">
-        {/* 地面 B→G */}
         <line x1="40" y1="200" x2="340" y2="200" stroke="#1e293b" strokeWidth="2" />
-        {/* 眼睛水平線 A→F */}
         <line x1="40" y1="140" x2="340" y2="140" stroke="#1e293b" strokeWidth="2" />
-        {/* 垂直 A→B */}
         <line x1="40" y1="140" x2="40" y2="200" stroke="#1e293b" strokeWidth="2" />
-        {/* 垂直 C→D */}
         <line x1="180" y1="140" x2="180" y2="200" stroke="#1e293b" strokeWidth="2" />
-        {/* 建築物 F→G */}
         <line x1="340" y1="140" x2="340" y2="200" stroke="#1e293b" strokeWidth="2" />
-        {/* F→E */}
         <line x1="340" y1="140" x2="340" y2="30" stroke="#1e293b" strokeWidth="2" />
-        {/* A→E */}
         <line x1="40" y1="140" x2="340" y2="30" stroke="#1e293b" strokeWidth="2" />
-        {/* C→E */}
         <line x1="180" y1="140" x2="340" y2="30" stroke="#1e293b" strokeWidth="2" />
-        {/* F 直角 */}
         <path d="M 332 140 L 332 132 L 340 132" fill="none" stroke="#1e293b" strokeWidth="1.2" />
-        {/* x 角弧（在 A） */}
         <path d="M 65 140 A 25 25 0 0 0 62 131" fill="none" stroke="#dc2626" strokeWidth="1.5" />
-        {/* y 角弧（在 C） */}
         <path d="M 205 140 A 25 25 0 0 0 202 128" fill="none" stroke="#dc2626" strokeWidth="1.5" />
-        {/* 標籤 */}
         <text x="28" y="138" fontSize="13" fontWeight="bold">A</text>
         <text x="28" y="215" fontSize="13" fontWeight="bold">B</text>
         <text x="184" y="136" fontSize="13" fontWeight="bold">C</text>
@@ -802,7 +822,6 @@ function Step1Photo({ student, task, data, onSave }) {
         <text x="346" y="215" fontSize="13" fontWeight="bold">G</text>
         <text x="75" y="135" fontSize="13" fill="#dc2626" fontWeight="bold">x</text>
         <text x="215" y="135" fontSize="13" fill="#dc2626" fontWeight="bold">y</text>
-        {/* BD 標示 */}
         <text x="95" y="225" fontSize="12" fill="#0f766e" fontWeight="bold">BD</text>
         <text x="250" y="225" fontSize="12" fill="#64748b">DG</text>
         <text x="352" y="90" fontSize="13" fill="#2563eb" fontWeight="bold">EF</text>
@@ -874,11 +893,20 @@ function Step1Photo({ student, task, data, onSave }) {
             <div className="bg-emerald-100 text-emerald-700 p-2 rounded-lg"><Ruler size={20} /></div>
             <div>
               <h2 className="font-bold text-slate-800 flex items-center gap-2">步驟 3：實地量度 <Cloud size={14} className="text-blue-500" /></h2>
-              <p className="text-xs text-slate-500">操場實測 → Python 即時計算 → 上傳 Google Sheet</p>
+              <p className="text-xs text-slate-500">操場實測 → 即時計算 → 上傳 Google Sheet</p>
             </div>
           </div>
 
-          {/* 🆕 參考圖示 */}
+          {/* 🆕 未完成步驟 2 的友善提示（不強制） */}
+          {!pythonData?.output?.success && (
+            <div className="bg-amber-50 border-2 border-amber-300 rounded-xl p-3 mb-4 flex items-start gap-2">
+              <AlertCircle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-amber-900">
+                <strong>溫馨提示：</strong>你尚未完成<strong>步驟 2（Python 編程）</strong>，因此下方無法對比 Python 結果，但你仍可以獨立完成實測量度！
+              </div>
+            </div>
+          )}
+
           <div className="bg-gradient-to-br from-slate-50 to-blue-50 border-2 border-slate-200 rounded-xl p-3 mb-4">
             <div className="text-xs font-bold text-slate-600 mb-2 flex items-center gap-1">
               📐 量度參考圖示 {task === 'task1' ? '（陰雨操場）' : '（學校大樓）'}
@@ -887,7 +915,7 @@ function Step1Photo({ student, task, data, onSave }) {
           </div>
 
           <div className="bg-emerald-50 border-l-4 border-emerald-400 rounded-r-lg p-3 mb-4 text-sm text-slate-700">
-            📏 做 <strong>2-4 組</strong> 量度（可多位同學輪流），右邊 Python 終端機會<strong>即時計算</strong>結果。
+            📏 做 <strong>2-4 組</strong> 量度（可多位同學輪流），右邊終端機會<strong>即時計算</strong>結果。
           </div>
 
           <div className="space-y-3">
@@ -903,9 +931,7 @@ function Step1Photo({ student, task, data, onSave }) {
                     {r?.error && <span className="text-xs bg-rose-100 text-rose-700 px-2 py-0.5 rounded">⚠ {r.error}</span>}
                   </div>
 
-                  {/* 🆕 左右分欄：輸入 | Python 即時輸出 */}
                   <div className="grid md:grid-cols-2 gap-3">
-                    {/* 左：輸入 */}
                     <div>
                       {task === 'task1' ? (
                         <div className="grid grid-cols-2 gap-2">
@@ -922,7 +948,6 @@ function Step1Photo({ student, task, data, onSave }) {
                       )}
                     </div>
 
-                    {/* 🆕 右：Python 即時終端機 */}
                     <div className="bg-slate-900 rounded-lg p-2.5 font-mono text-xs overflow-x-auto">
                       <div className="flex items-center gap-1 mb-1 pb-1 border-b border-slate-700">
                         <Terminal size={11} className="text-emerald-400" />
@@ -979,6 +1004,18 @@ function Step1Photo({ student, task, data, onSave }) {
             </div>
           )}
 
+          {/* 🆕 若只有實測平均（無 Python 對比），仍顯示摘要 */}
+          {average !== null && !pythonData?.output?.success && (
+            <div className="mt-4 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-xl p-4 text-white">
+              <div className="font-bold mb-2 flex items-center gap-2"><Trophy size={18} /> 實測結果摘要</div>
+              <div className="text-center">
+                <div className="text-xs opacity-80">實測平均（{valid.length} 組有效數據）</div>
+                <div className="text-3xl font-bold">{average.toFixed(2)} m</div>
+                <div className="text-xs opacity-80 mt-2">💡 完成步驟 2 後可自動對比 Python 結果</div>
+              </div>
+            </div>
+          )}
+
           <div className="mt-4">
             <label className="block text-sm font-semibold text-slate-700 mb-1">學習反思</label>
             <textarea value={reflection} onChange={e => setReflection(e.target.value)} placeholder="實測與 Python 的誤差來源..." className="w-full p-3 border-2 border-slate-200 rounded-lg outline-none focus:border-emerald-500 text-sm resize-none" rows={3} />
@@ -987,7 +1024,7 @@ function Step1Photo({ student, task, data, onSave }) {
           {err && <div className="bg-rose-50 border border-rose-200 text-rose-700 text-sm rounded-lg p-2 mt-3 flex items-center gap-1"><AlertCircle size={14} />{err}</div>}
 
           <button onClick={submit} disabled={syncing} className="w-full mt-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:shadow-lg text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50">
-            {syncing ? <><Loader2 size={16} className="animate-spin" /> 上傳到 Google Sheet...</> : <><CheckCircle2 size={18} /> 完成任務並上傳</>}
+            {syncing ? <><Loader2 size={16} className="animate-spin" /> 上傳到 Google Sheet...</> : <><CheckCircle2 size={18} /> 完成並返回主頁</>}
           </button>
         </div>
       );
@@ -1034,27 +1071,27 @@ function Step1Photo({ student, task, data, onSave }) {
             <div className="font-bold text-slate-700 text-sm flex items-center gap-1 mb-1"><Camera size={14} /> 步驟 1：紙本計算 {data.step1?.synced && <CloudBadge status="success" />}</div>
             {data.step1 ? (<>
               {data.step1.photoUrls && data.step1.photoUrls.length > 0 && (
-  <div className="text-xs text-blue-600 mb-2">
-    <Cloud size={12} className="inline" /> 已上傳 {data.step1.photoUrls.length} 張到 Google Drive
-    <div className="mt-1 space-y-0.5">
-      {data.step1.photoUrls.map((url, i) => (
-        <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block hover:underline">
-          📎 第 {i + 1} 張
-        </a>
-      ))}
-    </div>
-  </div>
-)}
-{data.step1.photos && data.step1.photos.length > 0 && (
-  <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-    {data.step1.photos.map((p, i) => (
-      <div key={i} className="relative">
-        <img src={p.src} alt={`工作紙 ${i+1}`} className="w-full h-32 object-cover rounded border border-slate-200" />
-        <div className="absolute top-1 left-1 bg-rose-500 text-white text-xs px-1.5 py-0.5 rounded">#{i+1}</div>
-      </div>
-    ))}
-  </div>
-)}
+                <div className="text-xs text-blue-600 mb-2">
+                  <Cloud size={12} className="inline" /> 已上傳 {data.step1.photoUrls.length} 張到 Google Drive
+                  <div className="mt-1 space-y-0.5">
+                    {data.step1.photoUrls.map((url, i) => (
+                      <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="block hover:underline">
+                        📎 第 {i + 1} 張
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {data.step1.photos && data.step1.photos.length > 0 && (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  {data.step1.photos.map((p, i) => (
+                    <div key={i} className="relative">
+                      <img src={p.src} alt={`工作紙 ${i+1}`} className="w-full h-32 object-cover rounded border border-slate-200" />
+                      <div className="absolute top-1 left-1 bg-rose-500 text-white text-xs px-1.5 py-0.5 rounded">#{i+1}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
               {data.step1.notes && <div className="text-sm text-slate-700 mt-2 bg-slate-50 p-2 rounded">📝 {data.step1.notes}</div>}
             </>) : <div className="text-sm text-slate-400">未完成</div>}
           </div>
