@@ -520,7 +520,7 @@ function Step1Photo({ student, task, data, onSave }) {
   );
 }
 
-    // ============================================================
+// ============================================================
     // STEP 2
     // ============================================================
     function Step2Python({ student, task, data, onSave }) {
@@ -578,64 +578,118 @@ function Step1Photo({ student, task, data, onSave }) {
             </div>
           </div>
 
-          <div className="bg-slate-900 rounded-xl overflow-hidden mb-3 shadow-lg">
-            <div className="bg-slate-800 px-3 py-2 flex items-center gap-2"><Terminal size={14} className="text-emerald-400" /><span className="text-xs text-slate-300 font-mono">{task === 'task1' ? 'covered_playground.py' : 'school_height.py'}</span></div>
-            <div className="p-4 font-mono text-sm text-slate-200 space-y-1 overflow-x-auto">
-              <div><span className="text-purple-400">import</span> <span className="text-sky-300">math</span></div>
-              {task === 'task1' ? (<>
-                <CodeInput label="theta" placeholder="45" value={code.theta} onChange={v => setCode({ ...code, theta: v })} comment="# 仰角 (度)" />
-                <CodeInput label="h2" step="0.01" placeholder="1.55" value={code.h2} onChange={v => setCode({ ...code, h2: v })} comment="# 眼睛高度" />
-              </>) : (<>
-                <CodeInput label="BD" placeholder="9" value={code.BD} onChange={v => setCode({ ...code, BD: v })} comment="# 兩觀察點距離" />
-                <CodeInput label="x" placeholder="25" value={code.x} onChange={v => setCode({ ...code, x: v })} comment="# 較小仰角" />
-                <CodeInput label="y" placeholder="45" value={code.y} onChange={v => setCode({ ...code, y: v })} comment="# 較大仰角" />
-                <CodeInput label="eye" step="0.01" placeholder="1.55" value={code.eye} onChange={v => setCode({ ...code, eye: v })} comment="# 眼睛高度" />
-              </>)}
-              <div className="text-slate-500 mt-1"># 計算公式</div>
-              <div className="flex items-start flex-wrap gap-1">
-                <span className="text-emerald-300">height</span><span className="text-slate-400">=</span>
-                <input type="text" value={code.formula} onChange={e => setCode({ ...code, formula: e.target.value })}
-                  placeholder={task === 'task1' ? '5*math.tan(math.radians(theta))+h2' : 'BD/(1/math.tan(math.radians(x))-1/math.tan(math.radians(y)))+eye'}
-                  className="bg-slate-800 border border-slate-700 rounded px-2 py-0.5 flex-1 min-w-0 text-yellow-300 font-mono text-xs outline-none focus:border-emerald-500" />
+          {/* 🆕 左右分欄：左邊程式碼，右邊小貼士 */}
+          <div className="grid lg:grid-cols-[1fr_280px] gap-4">
+
+            {/* 左：程式碼區 */}
+            <div>
+              <div className="bg-slate-900 rounded-xl overflow-hidden mb-3 shadow-lg">
+                <div className="bg-slate-800 px-3 py-2 flex items-center gap-2"><Terminal size={14} className="text-emerald-400" /><span className="text-xs text-slate-300 font-mono">{task === 'task1' ? 'covered_playground.py' : 'school_height.py'}</span></div>
+                <div className="p-4 font-mono text-sm text-slate-200 space-y-1 overflow-x-auto">
+                  <div><span className="text-purple-400">import</span> <span className="text-sky-300">math</span></div>
+                  {task === 'task1' ? (<>
+                    <CodeInput label="theta" value={code.theta} onChange={v => setCode({ ...code, theta: v })} comment="# 仰角 (度)" />
+                    <CodeInput label="h2" step="0.01" value={code.h2} onChange={v => setCode({ ...code, h2: v })} comment="# 眼睛高度" />
+                  </>) : (<>
+                    <CodeInput label="BD" value={code.BD} onChange={v => setCode({ ...code, BD: v })} comment="# 兩觀察點距離" />
+                    <CodeInput label="x" value={code.x} onChange={v => setCode({ ...code, x: v })} comment="# 較小仰角" />
+                    <CodeInput label="y" value={code.y} onChange={v => setCode({ ...code, y: v })} comment="# 較大仰角" />
+                    <CodeInput label="eye" step="0.01" value={code.eye} onChange={v => setCode({ ...code, eye: v })} comment="# 眼睛高度" />
+                  </>)}
+                  <div className="text-slate-500 mt-1"># 計算公式</div>
+                  <div className="flex items-start flex-wrap gap-1">
+                    <span className="text-emerald-300">height</span><span className="text-slate-400">=</span>
+                    <input type="text" value={code.formula} onChange={e => setCode({ ...code, formula: e.target.value })}
+                      className="bg-slate-800 border border-slate-700 rounded px-2 py-0.5 flex-1 min-w-0 text-yellow-300 font-mono text-xs outline-none focus:border-emerald-500" />
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
 
-          <div className="flex gap-2 mb-3 flex-wrap">
-            <button onClick={run} className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-4 py-2 rounded-lg font-bold text-sm hover:shadow-lg"><Play size={14} /> 執行</button>
-            <button onClick={() => setShowHint(!showHint)} className="flex items-center gap-1 bg-amber-100 text-amber-700 px-3 py-2 rounded-lg text-sm hover:bg-amber-200"><Lightbulb size={14} /> 提示</button>
-          </div>
+              <div className="flex gap-2 mb-3 flex-wrap">
+                <button onClick={run} className="flex items-center gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-4 py-2 rounded-lg font-bold text-sm hover:shadow-lg"><Play size={14} /> 執行</button>
+                <button onClick={() => setShowHint(!showHint)} className="flex items-center gap-1 bg-amber-100 text-amber-700 px-3 py-2 rounded-lg text-sm hover:bg-amber-200"><Lightbulb size={14} /> 提示</button>
+              </div>
 
-          {showHint && (
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3 text-xs font-mono">
-              {task === 'task1' ? (<>height = <code>5*math.tan(math.radians(theta))+h2</code></>) : (<>height = <code>BD/(1/math.tan(math.radians(x))-1/math.tan(math.radians(y)))+eye</code></>)}
-            </div>
-          )}
+              {showHint && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3 text-xs font-mono break-all">
+                  {task === 'task1' ? (<>height = <code>5*math.tan(math.radians(theta))+h2</code></>) : (<>height = <code>BD/(1/math.tan(math.radians(x))-1/math.tan(math.radians(y)))+eye</code></>)}
+                </div>
+              )}
 
-          {output && (
-            <div className={`rounded-xl p-3 mb-3 ${output.error ? 'bg-rose-50 border border-rose-200' : 'bg-slate-900'}`}>
-              {output.error ? <div className="text-rose-700 text-sm flex items-start gap-2"><AlertCircle size={16} />{output.error}</div> : (
-                <div className="font-mono text-sm">
-                  <div className="text-yellow-300 font-bold">高度 = {output.total.toFixed(3)} m</div>
-                  <div className="text-emerald-300 text-xs mt-2 flex items-center gap-1"><CheckCircle2 size={12} /> 執行成功</div>
+              {output && (
+                <div className={`rounded-xl p-3 mb-3 ${output.error ? 'bg-rose-50 border border-rose-200' : 'bg-slate-900'}`}>
+                  {output.error ? <div className="text-rose-700 text-sm flex items-start gap-2"><AlertCircle size={16} />{output.error}</div> : (
+                    <div className="font-mono text-sm">
+                      <div className="text-yellow-300 font-bold">高度 = {output.total.toFixed(3)} m</div>
+                      <div className="text-emerald-300 text-xs mt-2 flex items-center gap-1"><CheckCircle2 size={12} /> 執行成功</div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          )}
 
-          <button onClick={submit} disabled={!output?.success || syncing} className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-40">
+            {/* 🆕 右：Python 小貼士側邊欄 */}
+            <aside className="bg-gradient-to-br from-amber-50 to-yellow-50 border-2 border-amber-300 rounded-xl p-3 h-fit lg:sticky lg:top-3">
+              <div className="flex items-center gap-1 mb-2 pb-2 border-b-2 border-dashed border-amber-300">
+                <Lightbulb size={16} className="text-amber-600" />
+                <span className="font-bold text-amber-900 text-sm">Python 小貼士</span>
+              </div>
+
+              <div className="text-xs text-slate-700 space-y-2 mb-3">
+                <div>
+                  <div className="font-bold text-amber-900 mb-0.5">📐 三角函數</div>
+                  <div>Python 的 <code className="bg-slate-800 text-emerald-300 px-1 rounded text-[11px]">math.tan()</code> 要用<strong className="text-rose-600">弧度</strong>，不是度數！</div>
+                </div>
+                <div>
+                  <div className="font-bold text-amber-900 mb-0.5">🔄 度數轉弧度</div>
+                  <div>用 <code className="bg-slate-800 text-emerald-300 px-1 rounded text-[11px]">math.radians()</code> 轉換</div>
+                </div>
+              </div>
+
+              <div className="bg-white rounded-lg p-2 border border-amber-200 mb-2">
+                <div className="text-[11px] font-bold text-amber-900 mb-1">✨ 寫法對照</div>
+                <table className="w-full text-[11px]">
+                  <tbody className="font-mono">
+                    <tr className="border-b border-amber-100">
+                      <td className="py-1 pr-1 text-slate-600">tan 50°</td>
+                      <td className="py-1 text-indigo-700 break-all">math.tan(math.radians(50))</td>
+                    </tr>
+                    <tr className="border-b border-amber-100">
+                      <td className="py-1 pr-1 text-slate-600">sin 30°</td>
+                      <td className="py-1 text-indigo-700 break-all">math.sin(math.radians(30))</td>
+                    </tr>
+                    <tr className="border-b border-amber-100">
+                      <td className="py-1 pr-1 text-slate-600">cos 45°</td>
+                      <td className="py-1 text-indigo-700 break-all">math.cos(math.radians(45))</td>
+                    </tr>
+                    <tr>
+                      <td className="py-1 pr-1 text-slate-600">1 / tan x</td>
+                      <td className="py-1 text-indigo-700 break-all">1/math.tan(math.radians(x))</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="bg-rose-50 border-l-4 border-rose-400 p-2 rounded text-[11px] text-rose-800">
+                ⚠️ 別忘記最上面要 <code className="bg-slate-800 text-emerald-300 px-1 rounded">import math</code>
+              </div>
+            </aside>
+
+          </div>
+
+          <button onClick={submit} disabled={!output?.success || syncing} className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:shadow-lg text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-40 mt-2">
             {syncing ? <><Loader2 size={16} className="animate-spin" /> 上傳中...</> : <>提交並進入下一步 <ArrowRight size={16} /></>}
           </button>
         </div>
       );
     }
 
-    function CodeInput({ label, placeholder, value, onChange, step, comment }) {
+    function CodeInput({ label, value, onChange, step, comment }) {
       return (<>
         <div className="text-slate-500">{comment}</div>
         <div className="flex items-center flex-wrap gap-1">
           <span className="text-emerald-300">{label}</span><span className="text-slate-400">=</span>
-          <input type="number" step={step} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder}
+          <input type="number" step={step} value={value} onChange={e => onChange(e.target.value)}
             className="bg-slate-800 border border-slate-700 rounded px-2 py-0.5 w-20 text-yellow-300 outline-none focus:border-emerald-500" />
         </div>
       </>);
