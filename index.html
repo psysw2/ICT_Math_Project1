@@ -696,27 +696,131 @@ function Step1Photo({ student, task, data, onSave }) {
     }
 
     // ============================================================
+    // STEP 3 - 圖示 SVG
+    // ============================================================
+    const DiagramTask1 = () => (
+      <svg viewBox="0 0 340 210" className="w-full h-auto max-h-52 mx-auto">
+        {/* 水平虛線 A→R */}
+        <line x1="60" y1="110" x2="260" y2="110" stroke="#64748b" strokeDasharray="5 4" strokeWidth="1.5" />
+        {/* 斜邊 A→P */}
+        <line x1="60" y1="110" x2="260" y2="30" stroke="#1e293b" strokeWidth="2" />
+        {/* P→R */}
+        <line x1="260" y1="30" x2="260" y2="110" stroke="#1e293b" strokeWidth="2" />
+        {/* R→Q */}
+        <line x1="260" y1="110" x2="260" y2="160" stroke="#1e293b" strokeWidth="2" />
+        {/* A→B */}
+        <line x1="60" y1="110" x2="60" y2="160" stroke="#1e293b" strokeWidth="2" />
+        {/* B→Q */}
+        <line x1="60" y1="160" x2="260" y2="160" stroke="#1e293b" strokeWidth="2" />
+        {/* R 直角 */}
+        <path d="M 252 110 L 252 118 L 260 118" fill="none" stroke="#1e293b" strokeWidth="1.2" />
+        {/* Q 直角 */}
+        <path d="M 252 160 L 252 152 L 260 152" fill="none" stroke="#1e293b" strokeWidth="1.2" />
+        {/* θ 角弧 */}
+        <path d="M 80 110 A 20 20 0 0 0 78 103" fill="none" stroke="#dc2626" strokeWidth="1.5" />
+        {/* 總高度箭頭 ? m */}
+        <line x1="295" y1="30" x2="295" y2="160" stroke="#dc2626" strokeWidth="1.5" markerEnd="url(#ar1)" markerStart="url(#ar1s)" />
+        <defs>
+          <marker id="ar1" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#dc2626" />
+          </marker>
+          <marker id="ar1s" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#dc2626" />
+          </marker>
+        </defs>
+        {/* h1 箭頭 */}
+        <line x1="272" y1="30" x2="272" y2="110" stroke="#2563eb" strokeWidth="1.2" />
+        {/* 標籤 */}
+        <text x="264" y="24" fontSize="13" fontWeight="bold">P</text>
+        <text x="265" y="108" fontSize="12" fontWeight="bold">R</text>
+        <text x="265" y="155" fontSize="12" fontWeight="bold">Q</text>
+        <text x="48" y="108" fontSize="12" fontWeight="bold">A</text>
+        <text x="48" y="172" fontSize="12" fontWeight="bold">B</text>
+        <text x="276" y="73" fontSize="13" fill="#2563eb" fontWeight="bold">h₁</text>
+        <text x="30" y="140" fontSize="13" fill="#2563eb" fontWeight="bold">h₂</text>
+        <text x="150" y="178" fontSize="13" fill="#0f766e" fontWeight="bold">x = 5 m</text>
+        <text x="86" y="108" fontSize="11" fill="#dc2626" fontWeight="bold">θ</text>
+        <text x="302" y="100" fontSize="14" fill="#dc2626" fontWeight="bold">? m</text>
+      </svg>
+    );
+
+    const DiagramTask2 = () => (
+      <svg viewBox="0 0 380 240" className="w-full h-auto max-h-56 mx-auto">
+        {/* 地面 B→G */}
+        <line x1="40" y1="200" x2="340" y2="200" stroke="#1e293b" strokeWidth="2" />
+        {/* 眼睛水平線 A→F */}
+        <line x1="40" y1="140" x2="340" y2="140" stroke="#1e293b" strokeWidth="2" />
+        {/* 垂直 A→B */}
+        <line x1="40" y1="140" x2="40" y2="200" stroke="#1e293b" strokeWidth="2" />
+        {/* 垂直 C→D */}
+        <line x1="180" y1="140" x2="180" y2="200" stroke="#1e293b" strokeWidth="2" />
+        {/* 建築物 F→G */}
+        <line x1="340" y1="140" x2="340" y2="200" stroke="#1e293b" strokeWidth="2" />
+        {/* F→E */}
+        <line x1="340" y1="140" x2="340" y2="30" stroke="#1e293b" strokeWidth="2" />
+        {/* A→E */}
+        <line x1="40" y1="140" x2="340" y2="30" stroke="#1e293b" strokeWidth="2" />
+        {/* C→E */}
+        <line x1="180" y1="140" x2="340" y2="30" stroke="#1e293b" strokeWidth="2" />
+        {/* F 直角 */}
+        <path d="M 332 140 L 332 132 L 340 132" fill="none" stroke="#1e293b" strokeWidth="1.2" />
+        {/* x 角弧（在 A） */}
+        <path d="M 65 140 A 25 25 0 0 0 62 131" fill="none" stroke="#dc2626" strokeWidth="1.5" />
+        {/* y 角弧（在 C） */}
+        <path d="M 205 140 A 25 25 0 0 0 202 128" fill="none" stroke="#dc2626" strokeWidth="1.5" />
+        {/* 標籤 */}
+        <text x="28" y="138" fontSize="13" fontWeight="bold">A</text>
+        <text x="28" y="215" fontSize="13" fontWeight="bold">B</text>
+        <text x="184" y="136" fontSize="13" fontWeight="bold">C</text>
+        <text x="174" y="215" fontSize="13" fontWeight="bold">D</text>
+        <text x="346" y="32" fontSize="13" fontWeight="bold">E</text>
+        <text x="346" y="138" fontSize="13" fontWeight="bold">F</text>
+        <text x="346" y="215" fontSize="13" fontWeight="bold">G</text>
+        <text x="75" y="135" fontSize="13" fill="#dc2626" fontWeight="bold">x</text>
+        <text x="215" y="135" fontSize="13" fill="#dc2626" fontWeight="bold">y</text>
+        {/* BD 標示 */}
+        <text x="95" y="225" fontSize="12" fill="#0f766e" fontWeight="bold">BD</text>
+        <text x="250" y="225" fontSize="12" fill="#64748b">DG</text>
+        <text x="352" y="90" fontSize="13" fill="#2563eb" fontWeight="bold">EF</text>
+        <text x="352" y="175" fontSize="12" fill="#64748b">eye</text>
+      </svg>
+    );
+
+    // ============================================================
     // STEP 3
     // ============================================================
     function Step3Measurement({ student, task, data, pythonData, onSave }) {
-      const [measurements, setMeasurements] = useState(data?.measurements || (task === 'task1'
-        ? [{ id: 1, theta: '', h2: '' }, { id: 2, theta: '', h2: '' }, { id: 3, theta: '', h2: '' }]
-        : [{ id: 1, label: '排球場 (BD=9)', BD: '9', x: '', y: '' }, { id: 2, label: '籃球場 (BD=15)', BD: '15', x: '', y: '' }, { id: 3, label: '自訂', BD: '', x: '', y: '' }]
-      ));
-      const [eyeLevel, setEyeLevel] = useState(data?.eyeLevel || '');
+      const defaultTask1 = [
+        { id: 1, theta: '', h2: '' },
+        { id: 2, theta: '', h2: '' },
+        { id: 3, theta: '', h2: '' },
+        { id: 4, theta: '', h2: '' },
+      ];
+      const defaultTask2 = [
+        { id: 1, label: '排球場 (BD=9)', BD: '9', x: '', y: '', eye: '' },
+        { id: 2, label: '籃球場 (BD=15)', BD: '15', x: '', y: '', eye: '' },
+        { id: 3, label: '自訂 A', BD: '', x: '', y: '', eye: '' },
+        { id: 4, label: '自訂 B', BD: '', x: '', y: '', eye: '' },
+      ];
+
+      const [measurements, setMeasurements] = useState(
+        data?.measurements || (task === 'task1' ? defaultTask1 : defaultTask2)
+      );
       const [reflection, setReflection] = useState(data?.reflection || '');
       const [err, setErr] = useState('');
       const [syncing, setSyncing] = useState(false);
 
-      const update = (id, key, val) => setMeasurements(measurements.map(m => m.id === id ? { ...m, [key]: val } : m));
+      const update = (id, key, val) =>
+        setMeasurements(measurements.map(m => m.id === id ? { ...m, [key]: val } : m));
 
       const calcTask1 = (m) => {
         const t = parseFloat(m.theta), h2 = parseFloat(m.h2);
         if (isNaN(t) || isNaN(h2)) return null;
-        return { h1: 5 * Math.tan(t * Math.PI / 180), total: 5 * Math.tan(t * Math.PI / 180) + h2 };
+        const h1 = 5 * Math.tan(t * Math.PI / 180);
+        return { h1, total: h1 + h2 };
       };
       const calcTask2 = (m) => {
-        const BD = parseFloat(m.BD), x = parseFloat(m.x), y = parseFloat(m.y), eye = parseFloat(eyeLevel);
+        const BD = parseFloat(m.BD), x = parseFloat(m.x), y = parseFloat(m.y), eye = parseFloat(m.eye);
         if ([BD, x, y, eye].some(isNaN)) return null;
         if (x >= y) return { error: 'x 必須 < y' };
         const EF = BD / (1 / Math.tan(x * Math.PI / 180) - 1 / Math.tan(y * Math.PI / 180));
@@ -731,11 +835,11 @@ function Step1Photo({ student, task, data, onSave }) {
         if (valid.length < 2) { setErr('請至少完成 2 組有效數據'); return; }
         setSyncing(true); setErr('');
         try {
-          await apiCall('saveStep3', { student, task, measurements, eyeLevel, reflection, average, validCount: valid.length, pythonResult: pythonData?.output?.total || null });
-          onSave({ measurements, eyeLevel, reflection, average, validCount: valid.length, submittedAt: new Date().toLocaleString('zh-HK'), synced: true });
+          await apiCall('saveStep3', { student, task, measurements, reflection, average, validCount: valid.length, pythonResult: pythonData?.output?.total || null });
+          onSave({ measurements, reflection, average, validCount: valid.length, submittedAt: new Date().toLocaleString('zh-HK'), synced: true });
         } catch (e) {
           if (confirm(`雲端上傳失敗：${e.message}\n\n是否仍要完成任務？`)) {
-            onSave({ measurements, eyeLevel, reflection, average, validCount: valid.length, submittedAt: new Date().toLocaleString('zh-HK'), synced: false });
+            onSave({ measurements, reflection, average, validCount: valid.length, submittedAt: new Date().toLocaleString('zh-HK'), synced: false });
           }
         } finally { setSyncing(false); }
       };
@@ -746,42 +850,95 @@ function Step1Photo({ student, task, data, onSave }) {
             <div className="bg-emerald-100 text-emerald-700 p-2 rounded-lg"><Ruler size={20} /></div>
             <div>
               <h2 className="font-bold text-slate-800 flex items-center gap-2">步驟 3：實地量度 <Cloud size={14} className="text-blue-500" /></h2>
-              <p className="text-xs text-slate-500">操場實測 → 自動上傳到 Google Sheet</p>
+              <p className="text-xs text-slate-500">操場實測 → Python 即時計算 → 上傳 Google Sheet</p>
             </div>
           </div>
 
-          <div className="bg-emerald-50 border-l-4 border-emerald-400 rounded-r-lg p-3 mb-4 text-sm text-slate-700">📏 至少做 <strong>2-3 組</strong>，會自動計算平均並對比 Python 結果</div>
-
-          {task === 'task2' && (
-            <div className="bg-slate-50 rounded-xl p-3 mb-4 flex items-center gap-3 flex-wrap">
-              <label className="font-semibold text-slate-700 text-sm">眼睛高度：</label>
-              <input type="number" step="0.01" value={eyeLevel} onChange={e => setEyeLevel(e.target.value)} placeholder="1.55" className="w-28 px-2 py-1.5 border-2 border-slate-300 rounded-lg outline-none focus:border-emerald-500" />
-              <span className="text-slate-600 text-sm">米</span>
+          {/* 🆕 參考圖示 */}
+          <div className="bg-gradient-to-br from-slate-50 to-blue-50 border-2 border-slate-200 rounded-xl p-3 mb-4">
+            <div className="text-xs font-bold text-slate-600 mb-2 flex items-center gap-1">
+              📐 量度參考圖示 {task === 'task1' ? '（陰雨操場）' : '（學校大樓）'}
             </div>
-          )}
+            {task === 'task1' ? <DiagramTask1 /> : <DiagramTask2 />}
+          </div>
+
+          <div className="bg-emerald-50 border-l-4 border-emerald-400 rounded-r-lg p-3 mb-4 text-sm text-slate-700">
+            📏 做 <strong>2-4 組</strong> 量度（可多位同學輪流），右邊 Python 終端機會<strong>即時計算</strong>結果。
+          </div>
 
           <div className="space-y-3">
             {measurements.map((m, i) => {
               const r = results[i].result;
               return (
                 <div key={m.id} className="border-2 border-slate-200 rounded-xl p-3 hover:border-emerald-300 transition">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-bold text-slate-700 text-sm">第 {m.id} 組{m.label ? ` · ${m.label}` : ''}</span>
-                    {r && !r.error && <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded font-bold">= {r.total.toFixed(2)} m</span>}
+                  <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                    <span className="font-bold text-slate-700 text-sm">
+                      第 {m.id} 組{m.label ? ` · ${m.label}` : ''}
+                    </span>
+                    {r && !r.error && <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded font-bold">✓ = {r.total.toFixed(2)} m</span>}
                     {r?.error && <span className="text-xs bg-rose-100 text-rose-700 px-2 py-0.5 rounded">⚠ {r.error}</span>}
                   </div>
-                  {task === 'task1' ? (
-                    <div className="grid grid-cols-2 gap-2">
-                      <InputBox label="仰角 θ (°)" value={m.theta} onChange={v => update(m.id, 'theta', v)} step="0.1" />
-                      <InputBox label="眼睛高度 (m)" value={m.h2} onChange={v => update(m.id, 'h2', v)} step="0.01" />
+
+                  {/* 🆕 左右分欄：輸入 | Python 即時輸出 */}
+                  <div className="grid md:grid-cols-2 gap-3">
+                    {/* 左：輸入 */}
+                    <div>
+                      {task === 'task1' ? (
+                        <div className="grid grid-cols-2 gap-2">
+                          <InputBox label="仰角 θ (°)" value={m.theta} onChange={v => update(m.id, 'theta', v)} step="0.1" />
+                          <InputBox label="眼睛高度 h₂ (m)" value={m.h2} onChange={v => update(m.id, 'h2', v)} step="0.01" />
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-2">
+                          <InputBox label="BD (m)" value={m.BD} onChange={v => update(m.id, 'BD', v)} step="0.1" disabled={m.id <= 2} />
+                          <InputBox label="眼睛高度 (m)" value={m.eye} onChange={v => update(m.id, 'eye', v)} step="0.01" />
+                          <InputBox label="仰角 x (°)" value={m.x} onChange={v => update(m.id, 'x', v)} step="0.1" />
+                          <InputBox label="仰角 y (°)" value={m.y} onChange={v => update(m.id, 'y', v)} step="0.1" />
+                        </div>
+                      )}
                     </div>
-                  ) : (
-                    <div className="grid grid-cols-3 gap-2">
-                      <InputBox label="BD (m)" value={m.BD} onChange={v => update(m.id, 'BD', v)} step="0.1" disabled={m.id <= 2} />
-                      <InputBox label="仰角 x (°)" value={m.x} onChange={v => update(m.id, 'x', v)} step="0.1" />
-                      <InputBox label="仰角 y (°)" value={m.y} onChange={v => update(m.id, 'y', v)} step="0.1" />
+
+                    {/* 🆕 右：Python 即時終端機 */}
+                    <div className="bg-slate-900 rounded-lg p-2.5 font-mono text-xs overflow-x-auto">
+                      <div className="flex items-center gap-1 mb-1 pb-1 border-b border-slate-700">
+                        <Terminal size={11} className="text-emerald-400" />
+                        <span className="text-slate-400 text-[10px]">Python 即時運算</span>
+                      </div>
+                      {task === 'task1' ? (
+                        <div className="space-y-0.5 leading-relaxed">
+                          <div><span className="text-purple-400">import</span> <span className="text-sky-300">math</span></div>
+                          <div><span className="text-emerald-300">theta</span> <span className="text-slate-400">=</span> <span className="text-yellow-300">{m.theta || '?'}</span></div>
+                          <div><span className="text-emerald-300">h2</span> <span className="text-slate-400">=</span> <span className="text-yellow-300">{m.h2 || '?'}</span></div>
+                          <div className="text-slate-500 text-[10px]"># 5·tan(θ) + h₂</div>
+                          {r ? (
+                            <div className="pt-1 mt-1 border-t border-slate-700">
+                              <div className="text-slate-400 text-[10px]">h₁ = {r.h1.toFixed(3)}</div>
+                              <div className="text-yellow-300 font-bold">→ {r.total.toFixed(3)} m</div>
+                            </div>
+                          ) : (
+                            <div className="pt-1 mt-1 border-t border-slate-700 text-slate-500 italic">（等待輸入...）</div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="space-y-0.5 leading-relaxed">
+                          <div><span className="text-purple-400">import</span> <span className="text-sky-300">math</span></div>
+                          <div><span className="text-emerald-300">BD</span><span className="text-slate-400">=</span><span className="text-yellow-300">{m.BD || '?'}</span> <span className="text-emerald-300">eye</span><span className="text-slate-400">=</span><span className="text-yellow-300">{m.eye || '?'}</span></div>
+                          <div><span className="text-emerald-300">x</span><span className="text-slate-400">=</span><span className="text-yellow-300">{m.x || '?'}</span> <span className="text-emerald-300">y</span><span className="text-slate-400">=</span><span className="text-yellow-300">{m.y || '?'}</span></div>
+                          <div className="text-slate-500 text-[10px]"># BD/(1/tan x − 1/tan y) + eye</div>
+                          {r && !r.error ? (
+                            <div className="pt-1 mt-1 border-t border-slate-700">
+                              <div className="text-slate-400 text-[10px]">EF = {r.EF.toFixed(3)}</div>
+                              <div className="text-yellow-300 font-bold">→ {r.total.toFixed(3)} m</div>
+                            </div>
+                          ) : r?.error ? (
+                            <div className="pt-1 mt-1 border-t border-slate-700 text-rose-400">⚠ {r.error}</div>
+                          ) : (
+                            <div className="pt-1 mt-1 border-t border-slate-700 text-slate-500 italic">（等待輸入...）</div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  )}
+                  </div>
                 </div>
               );
             })}
@@ -791,8 +948,8 @@ function Step1Photo({ student, task, data, onSave }) {
             <div className="mt-4 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl p-4 text-white">
               <div className="font-bold mb-2 flex items-center gap-2"><Trophy size={18} /> 實測 vs Python</div>
               <div className="grid grid-cols-3 gap-3 text-center">
-                <div><div className="text-xs opacity-80">實測平均</div><div className="text-2xl font-bold">{average.toFixed(2)} m</div></div>
-                <div><div className="text-xs opacity-80">Python</div><div className="text-2xl font-bold">{pythonData.output.total.toFixed(2)} m</div></div>
+                <div><div className="text-xs opacity-80">實測平均 ({valid.length} 組)</div><div className="text-2xl font-bold">{average.toFixed(2)} m</div></div>
+                <div><div className="text-xs opacity-80">Python 結果</div><div className="text-2xl font-bold">{pythonData.output.total.toFixed(2)} m</div></div>
                 <div><div className="text-xs opacity-80">誤差</div><div className="text-2xl font-bold">{Math.abs(average - pythonData.output.total).toFixed(2)} m</div></div>
               </div>
             </div>
@@ -808,16 +965,6 @@ function Step1Photo({ student, task, data, onSave }) {
           <button onClick={submit} disabled={syncing} className="w-full mt-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:shadow-lg text-white font-bold py-3 rounded-xl transition flex items-center justify-center gap-2 disabled:opacity-50">
             {syncing ? <><Loader2 size={16} className="animate-spin" /> 上傳到 Google Sheet...</> : <><CheckCircle2 size={18} /> 完成任務並上傳</>}
           </button>
-        </div>
-      );
-    }
-
-    function InputBox({ label, value, onChange, step, disabled }) {
-      return (
-        <div>
-          <div className="text-xs text-slate-500 mb-0.5">{label}</div>
-          <input type="number" step={step} value={value} onChange={e => onChange(e.target.value)} disabled={disabled}
-            className="w-full px-2 py-1.5 border-2 border-slate-200 rounded-lg outline-none focus:border-emerald-500 text-sm disabled:bg-slate-50" />
         </div>
       );
     }
