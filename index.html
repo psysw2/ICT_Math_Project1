@@ -696,29 +696,27 @@ function Step1Photo({ student, task, data, onSave }) {
     }
     
 // ============================================================
-    // InputBox（步驟 3 用）
+    // InputBox（步驟 3 用）— 改用 const arrow function 確保作用域
     // ============================================================
-    function InputBox({ label, value, onChange, step = '0.1', disabled = false }) {
-      return (
-        <label className="block">
-          <div className="text-[11px] font-semibold text-slate-600 mb-0.5">{label}</div>
-          <input
-            type="number"
-            step={step}
-            value={value}
-            disabled={disabled}
-            onChange={e => onChange(e.target.value)}
-            placeholder={disabled ? '' : '—'}
-            className={`w-full px-2 py-1.5 border-2 rounded-lg outline-none text-sm transition ${
-              disabled
-                ? 'bg-slate-100 border-slate-200 text-slate-500 cursor-not-allowed'
-                : 'border-slate-200 focus:border-emerald-500 bg-white'
-            }`}
-          />
-          {disabled && <div className="text-[10px] text-slate-400 mt-0.5">🔒 固定值</div>}
-        </label>
-      );
-    }
+    const InputBox = ({ label, value, onChange, step = '0.1', disabled = false }) => (
+      <label className="block">
+        <div className="text-[11px] font-semibold text-slate-600 mb-0.5">{label}</div>
+        <input
+          type="number"
+          step={step}
+          value={value}
+          disabled={disabled}
+          onChange={e => onChange(e.target.value)}
+          placeholder={disabled ? '' : '—'}
+          className={`w-full px-2 py-1.5 border-2 rounded-lg outline-none text-sm transition ${
+            disabled
+              ? 'bg-slate-100 border-slate-200 text-slate-500 cursor-not-allowed'
+              : 'border-slate-200 focus:border-emerald-500 bg-white'
+          }`}
+        />
+        {disabled && <div className="text-[10px] text-slate-400 mt-0.5">🔒 固定值</div>}
+      </label>
+    );
 
     
     // ============================================================
